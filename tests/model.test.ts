@@ -25,3 +25,18 @@ test('import merges repeated Gupy requisitions and retains source rows',()=>{
  const row=['one','Example','Engineer','90','APTA','Remoto','UNKNOWN','','','https://example.gupy.io/jobs/123',"ENVIADA — Gupy 'Candidatura finalizada!' 2026-10-17"];
  const result=normalizeTracker({opportunities:[[],row,['two',...row.slice(1)]],processes:[],discarded:[],rules:[]});assert.equal(result.applications.length,1);assert.equal(result.aliases.two,'one');
 });
+
+import {taskOwner} from '../lib/model';
+test('action owner separates personal steps from AI retries in legacy shared assignments',()=>{
+ const shared={responsible:'Candidate / Agent'};
+ assert.equal(taskOwner({...shared,title:'Confirmar IRA/GPA e inglês CEFR'}),'human');
+ assert.equal(taskOwner({...shared,title:'Candidato confirmar CNPJ ativo'}),'human');
+ assert.equal(taskOwner({...shared,title:'Completar hCaptcha manualmente no navegador'}),'human');
+ assert.equal(taskOwner({...shared,title:'Encontrar abertura oficial atual e confirmar remoto integral.'}),'ai');
+ assert.equal(taskOwner({...shared,title:'Investigar validação final/recaptcha e executar envio'}),'ai');
+ assert.equal(taskOwner({responsible:'Candidate',title:'Choose interview time'}),'human');
+ assert.equal(taskOwner({responsible:'Agente — inspecionar e completar se permitido',title:'Revisar próxima etapa'}),'ai');
+ const sorted=sortTasks(demoData().tasks);
+ assert.deepEqual(sorted.filter(t=>taskOwner(t)==='human').map(t=>t.id),['task1','task2']);
+ assert.deepEqual(sorted.filter(t=>taskOwner(t)==='ai').map(t=>t.id),['task3']);
+});
