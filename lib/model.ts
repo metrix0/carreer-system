@@ -21,3 +21,15 @@ export function metrics(apps:Application[],tasks:Task[],now=new Date()) {
 }
 export function safeUrl(url:string) {try {const u=new URL(url);return ['https:','http:'].includes(u.protocol)?u.href:undefined;}catch{return undefined;}}
 export function dateLabel(value:string|null){return value?new Date(value.length===10?value+'T12:00:00-03:00':value).toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'America/Sao_Paulo'}):'No deadline';}
+
+// Legacy imports sometimes assign both candidate and agent. Only an explicit
+// personal step belongs in the candidate queue; technical retries stay with AI.
+export function taskOwner(task: Pick<Task,'responsible'|'title'>): 'human'|'ai' {
+ const owner=task.responsible.normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase();
+ const candidate=/candidate|candidato|human|joao|^j$|^you$/.test(owner);
+ const agent=/agent|agente|\bai\b|work mode/.test(owner);
+ if(!candidate)return 'ai';
+ if(!agent)return 'human';
+ const title=task.title.normalize('NFD').replace(/\p{Diacritic}/gu,'').toLowerCase();
+ return /desafio humano|verificacao humana/.test(title) || /completar hcaptcha|captcha manual|intervencao manual|gpa|ira\/|ira,|cefr|proficiencia|pcd|parentesco|cnpj|nomes completos dos pais|candidato verificar|candidato confirmar/.test(title) ? 'human':'ai';
+}
