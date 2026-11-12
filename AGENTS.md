@@ -29,6 +29,17 @@ Submit! / Subscribe! authorizes actual applications to all eligible, unapplied o
 
 For each actionable item: inspect current evidence, perform the authorized next step, verify the result and persist it immediately. Complete tasks atomically with completed_at only after verified completion. An attempted but unsuccessful submission stays open with dated evidence, exact error, next recovery step and owner. Record attempts in task notes without erasing prior evidence. Re-read before writing and do not duplicate tasks.
 
+## Agent-action backlog invariant
+
+The `AI actions` count must measure concrete unfinished **Agent** work, not how many discoveries, submissions, or employers are merely awaiting a response.
+
+- **Do not create an Agent task just because a job was discovered or an application was submitted.** Store discoveries in `applications`; store passive recruiter waiting and last receipt in `applications.next_action`, `source_status` and `notes`. Waiting alone is not an active task.
+- Create tasks only for specific actionable research, technical recovery, or a currently due post-submission step that could not be finished in this run. Never create generic `monitor`, `follow up`, `await RH`, `check later`, or `apply` tasks without a verified concrete next action and correct owner.
+- When an actionable task is actually finished (e.g. official submission receipt obtained, a discrete Gmail Sent/DSN check performed, a live URL verified), complete that existing task **in the same run** with `status='completed'`, `completed_at=now()` and dated evidence. The *application* may still await RH and must stay in its real stage. An unresolved technical recovery must stay open; a failed attempt is not a completion.
+- Do not mechanically mark pending tasks complete, dismiss them, delete them, or reclassify candidate tasks just to improve the KPI. Preserve stage, deadline, source, notes and prior events. Check for actual duplicate work and treat discovered opportunities as pipeline records rather than a new action queue for every row.
+- Before and after every Submit! run, query the current open Agent task count and report `before → after`. If it increases, disclose **which real new uncompleted actions** caused the increase and which previously open tasks were completed; do not present backlog growth as progress.
+- A paused Career Radar automation is not performing passive monitoring. Never claim otherwise or silently reactivate it; preserve its existing enabled/paused state until an explicitly authorized change. Checking the mailbox during the current recruiting run does not promise future scheduled checks.
+
 Do not end after a few portals fail or an arbitrary quota. Continue through independent items. If a genuine execution/tool limit prevents finishing, checkpoint the exact remaining task IDs and next item in private tracker notes and report that the run is partial; never imply all work was attempted or promise an unscheduled continuation.
 
 Use responsible exactly Candidate or Agent. Split shared work into distinct tasks. Research, URL recovery and technical retries belong to Agent. Candidate tasks require a specific personal answer, assessment or human verification. Waiting alone is application status, not an actionable task; retain concrete receipt/bounce checks separately. Never mark waiting, a failed attempt or dismissal as successful completion to reduce the counter.
