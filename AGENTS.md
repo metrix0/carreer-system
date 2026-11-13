@@ -17,9 +17,15 @@ The dashboard reads Supabase project `obwktteidluebaksfhju`. Read the current sc
 - Application inserts and stage/outcome changes append `stage_events` automatically. Do not directly alter that history. Use `updated_at` as an optimistic-concurrency condition when updating records and refresh on conflict.
 - Workers can use the authorized Supabase MCP connection or a server-only service credential. No service credentials belong in browser code, public files, shell arguments or logs.
 
+## Private candidate profile
+
+At the start of each recruiting run, load the standing answers from the authorized Career Radar Supabase connection. Use `SELECT decrypted_secret::jsonb FROM vault.decrypted_secrets WHERE name = 'career_radar_candidate_answers';` before filling forms or assigning candidate actions. Retrieve only required identity fields from the separate `career_radar_candidate_identity` record. Keep private values out of public source, the dashboard, task notes, prompts, and reports. If access fails, track technical recovery as Agent work. Only ask the candidate for a required answer that is missing from the profile and authorized records.
+
+The user delegates cultural-fit steps and assessments when the portal or employer permits delegated assistance. Agent inspects the actual rules, completes permitted steps using verified profile information and approved preferences, and escalates only when an individual assessment or human interaction is required. A step name alone does not establish that requirement.
+
 ## Authorization
 
-New applications require the user's explicit Submit! / Subscribe!. Adding a record, moving a card or clicking an application URL does not authorize submitting to an employer. Approved routine follow-up stages are automatic. Escalate human-required assessments, CAPTCHAs, uncertain legal declarations and significant commitments. Never fabricate personal facts, test responses, submission receipts or interview invitations.
+New applications require the user's explicit Submit! / Subscribe!. Adding a record, moving a card or clicking an application URL does not authorize submitting to an employer. Approved routine follow-up stages are automatic. Escalate confirmed human-required assessments, CAPTCHAs, unresolved legal declarations and significant commitments. Use approved preferences for permitted assessment responses. Never fabricate personal facts, submission receipts or interview invitations.
 
 ## Recruitment run contract
 
