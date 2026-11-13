@@ -1,7 +1,7 @@
 export const stages = ['discovered','subscribed','screening','interview','offer','hired'] as const;
 export type Stage = typeof stages[number];
 export const stageLabels: Record<Stage,string> = {discovered:'Discovered',subscribed:'Subscribed',screening:'Passed / screening',interview:'Interview',offer:'Offer',hired:'Hired'};
-export type Application = {id:string; source_key:string; company:string; position:string; stage:Stage; outcome:'active'|'rejected'|'closed'|'excluded'; score:number; salary:string; remote:string; eligibility:string; deadline:string|null; source_url:string; next_action:string; responsible:string; submitted_at:string|null; submission_verified:boolean; confirmation:string; notes:string; source_status:string; created_at:string; updated_at:string};
+export type Application = {id:string; source_key:string; company:string; position:string; stage:Stage; outcome:'active'|'rejected'|'closed'|'excluded'; score:number; salary:string; remote:string; eligibility:string; deadline:string|null; source_url:string; next_action:string; responsible:string; submitted_at:string|null; submission_verified:boolean; confirmation:string; notes:string; source_status:string; created_at:string; updated_at:string; submission_details?:unknown};
 export type Task = {id:string; application_id:string; title:string; status:'blocked'|'pending'|'completed'; last_stage:Stage; responsible:string; deadline:string|null; url:string; notes:string; created_at:string; completed_at:string|null};
 export type StageEvent = {id:string; application_id:string; from_stage:Stage|null; to_stage:Stage; event_type:string; evidence:string; created_at:string};
 export const rank = (s:Stage) => stages.indexOf(s);
