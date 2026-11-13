@@ -2,18 +2,20 @@
 
 Move verified, eligible applications toward interviews. Dashboard: https://carreer.johnvitor.com.
 
-## One recruiting run at a time
+## Claim one application at a time
 
-All recruiting execution (Submit!/Subscribe!, scheduled follow-through, discovery and recovery) shares one database lease across every chat. Read-only dashboard viewing, candidate knowledge corrections and development are independent.
+Manual Submit!/Subscribe! and scheduled runs can work in parallel. Read the tracker and Gmail for triage, then generate a fresh UUID once for this run. Use the authorized Career Radar SQL connection:
 
-- After reading this file, before any recruiting write or Gmail/portal/browser action, generate a fresh UUID once and keep it as this run's ID. Call `select private.recruiting_lock('<run_uuid>'::uuid,'acquire');` through the authorized Career Radar SQL connection.
-- Proceed only on `true`. On `false`, say “A recruiting run is already active” and stop this run. Do not submit, send, browse portals, create tasks, force-release another run, poll in a loop or start an automatic retry. If acquisition errors, stop recruiting execution and report the error; never proceed unlocked.
-- Renew with the same UUID: `select private.recruiting_lock('<run_uuid>'::uuid,'renew');` before each external action or tracker write, at least once per minute while working, and immediately after a long tool call. Confirm `true` immediately before a final submission/send. Bound individual browser actions below the 15-minute lease. If renewal returns false or errors, stop all further recruiting actions: that run no longer owns the lock. Do not reacquire under the old run ID.
-- Persist verified results promptly. Before retrying an interrupted/uncertain action, inspect current tracker, portal receipts and Sent for duplicates; lease expiry is not proof that an employer action failed.
-- On completion, error, handoff or an execution limit, checkpoint unfinished work, then release only your own UUID with `select private.recruiting_lock('<run_uuid>'::uuid,'release');`. A crashed run expires after 15 minutes without renewal. Never retain a lease while waiting for the candidate.
+```sql
+select private.recruiting_claim('application:<applications.id>', '<run_uuid>'::uuid, 'acquire');
+```
 
-The database atomically selects one owner; this contract also applies to the existing automation because it loads this file.
-
+- Use the canonical tracker row's UUID after deduplicating requisitions, URLs and aliases. For a new role, save or reuse the canonical row with its unique `source_key` before taking any employer-facing action. Claim before opening or changing its portal, taking employer-facing action, or changing its tracker records. If acquisition returns false, skip that application and immediately try the next eligible queued item. Keep one application claim at a time. If the claim service errors, pause the affected work and report the error.
+- Use the same resource key and run UUID with `'renew'` before each external action or tracker write, at least once per minute while working, and immediately after long tool calls. Confirm true immediately before final submission/send. Bound browser actions below the 15-minute claim. If renewal fails, stop acting on that resource for this run and continue only with resources you can claim independently.
+- After acquiring, refresh the tracker and check portal/email evidence before sending or submitting. Immediately before an irreversible application submission, record `source_data.submission_in_progress` with the attempt time and channel while holding the claim. A later owner must reconcile that marker with portal/Gmail evidence before retrying. If the outcome remains uncertain, keep a receipt-check action open. Clear the marker only when the outcome is verified or the attempt is known to have failed. Persist the outcome before releasing with `'release'`. Release at completion, checkpoint or handoff. Claims expire after 15 minutes without renewal.
+- Use the same claim function with `email:<gmail_thread_id>` for email replies and email task updates. If linked, claim the application first, then the thread, and release in reverse order. Read-only inbox triage needs no claim.
+- Once the queue permits discovery, use the `discovery` resource for broad discovery. If another run holds it or is still working the actionable queue, defer discovery. Recheck the recorded discovery completion after claiming. For the daily report use `report:<YYYY-MM-DD>` in America/Sao_Paulo and verify prior delivery after claiming.
+- Shared Edge/RDC requires its existing exclusive browser control lock and human handoff checks in addition to the application claim. If browser control is busy, release the application claim and continue independent work.
 
 ## Load once per run
 
@@ -47,9 +49,9 @@ Routine follow-through on submitted applications is authorized. Inspect assessme
 ## Execute the existing queue first
 
 1. Check Gmail Inbox, All Mail, recruitment labels, Spam and Sent for confirmations, replies, stages, deadlines, rejections and delivery failures. Inspect relevant live portals. Deduplicate by requisition, URL, aliases, receipts and Sent.
-2. Advance actionable post-submission work by proximity to interview, then deadline. Next handle known eligible unapplied roles by fit/deadline when submission is authorized; otherwise prepare them without submitting.
+2. Advance actionable post-submission work by proximity to interview, then deadline. Skip resources claimed by another run and continue through the queue. Next handle known eligible unapplied roles by fit/deadline when submission is authorized; otherwise prepare them without submitting.
 3. For each item, inspect → execute → verify → persist immediately. Record failed attempts with dated evidence, exact error, recovery step and owner; continue independent items. Do not stop at arbitrary quotas or after a few failed portals.
-4. Only after every currently actionable queued item has been handled, discover broadly in PT/EN across LinkedIn, Gupy, Eureca, Indeed, official employers, remote boards and university programs. Targeted research that unblocks a role is queue work. Check recorded discovery completion: discover daily and research more deeply weekly when the queue permits; record completion evidence so hourly runs do not repeat it.
+4. Only after every currently actionable queued item has been handled and none is in progress elsewhere, discover broadly in PT/EN across LinkedIn, Gupy, Eureca, Indeed, official employers, remote boards and university programs. Targeted research that unblocks a role is queue work. Check recorded discovery completion: discover daily and research more deeply weekly when the queue permits; record completion evidence so hourly runs do not repeat it.
 5. At a genuine execution/tool limit, checkpoint remaining IDs and the next item privately. Report a partial run and defer discovery; never promise an unscheduled continuation.
 
 Use `application_writing` in Candidate Knowledge for achievement ranking, full PT-BR/English letters and tailored general-purpose answers, including optional “Anything else?”, “Comments”, “Algo a mais?” and “Observação” fields. Follow employer prompts, replace placeholders, use the form's language/length limit, retain the strongest relevant evidence, and save safe wording actually submitted.
