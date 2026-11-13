@@ -25,6 +25,12 @@ At the start of each recruiting run, load the standing answers from the authoriz
 
 The user delegates cultural-fit steps and assessments when the portal or employer permits delegated assistance. Agent inspects the actual rules, completes permitted steps using verified profile information and approved preferences, and escalates only when an individual assessment or human interaction is required. A step name alone does not establish that requirement.
 
+### Application answers and cover letters
+
+Use `operating_rules.application_writing` from the private candidate profile. Pick one or two role-relevant strengths for professional introductions, motivation and experience answers. Fill optional professional fields when a verified, specific answer adds value.
+
+Use the saved PT-BR or English cover-letter template in the posting's language. Provide it for required letter fields and for optional ones when a concrete role or company detail supports meaningful tailoring. Personalize the opening, select the strongest relevant evidence, replace every placeholder and respect the form's length limit. Use employer-facing metrics consistent with the CV being sent. Save the actual letter under `submission_details.custom_answers` when submitted and safe to retain.
+
 ## Authorization
 
 New applications require the user's explicit Submit! / Subscribe!. Adding a record, moving a card or clicking an application URL does not authorize submitting to an employer. Approved routine follow-up stages are automatic. Escalate confirmed human-required assessments, CAPTCHAs, unresolved legal declarations and significant commitments. Use approved preferences for permitted assessment responses. Never fabricate personal facts, submission receipts or interview invitations.
