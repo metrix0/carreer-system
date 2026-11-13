@@ -8,8 +8,10 @@ import {demoData} from '@/lib/demo';
 import {sharedBrowserUrl} from '@/lib/shared-browser';
 import Dialog from './dialog';
 import SubmissionDetails from './submission-details';
+import Knowledge from './knowledge';
 const columns='id,source_key,company,position,stage,outcome,score,salary,remote,eligibility,deadline,source_url,next_action,responsible,submitted_at,submission_verified,confirmation,notes,source_status,created_at,updated_at,submission_details:source_data->submission_details';
 export default function Dashboard(){
+ const [knowledgeOpen,setKnowledgeOpen]=useState(false);
  const [session,setSession]=useState<Session|null>(null),[ready,setReady]=useState(false),[demo,setDemo]=useState(false),[apps,setApps]=useState<Application[]>([]),[tasks,setTasks]=useState<Task[]>([]),[loading,setLoading]=useState(false),[saving,setSaving]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[query,setQuery]=useState(''),[archive,setArchive]=useState(false),[taskFilters,setTaskFilters]=useState<Record<'human'|'ai',string>>({human:'all',ai:'all'}),[selected,setSelected]=useState<Application|null>(null),[events,setEvents]=useState<StageEvent[]>([]),[adding,setAdding]=useState(false),[synced,setSynced]=useState<string|null>(null);
  const refresh=useCallback(async()=>{setLoading(true);setError('');try{
   const [a,t]=await Promise.all([supabase.from('applications').select(columns).order('score',{ascending:false}),supabase.from('tasks').select('*')]);
@@ -44,8 +46,9 @@ export default function Dashboard(){
  if(!ready)return <main className="splash"><Radar size={36}/><p>Opening your radar…</p></main>;
  if(!session&&!demo)return <Auth onDemo={enterDemo}/>;
  return <div className="shell">
- <div className="main-wrap"><header className="topbar"><a className="brand" href="/"><Radar size={22}/>Career Radar</a><div className="topbar-right"><span className={'sync '+(loading?'loading':'')}><i/>{demo?'Demo':loading?'Syncing…':synced?new Date(synced).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'})+' BRT':''}</span><button className="icon-button" title="Sign out" aria-label="Sign out" onClick={async()=>{if(demo){setDemo(false);setApps([]);setTasks([]);}else{await supabase.auth.signOut();setApps([]);setTasks([]);}}}><LogOut size={17}/></button></div></header>
+ <div className="main-wrap"><header className="topbar"><a className="brand" href="/"><Radar size={22}/>Career Radar</a><div className="topbar-right"><button className="knowledge-button" onClick={()=>setKnowledgeOpen(true)}>Knowledge</button><span className={'sync '+(loading?'loading':'')}><i/>{demo?'Demo':loading?'Syncing…':synced?new Date(synced).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'})+' BRT':''}</span><button className="icon-button" title="Sign out" aria-label="Sign out" onClick={async()=>{if(demo){setDemo(false);setApps([]);setTasks([]);}else{await supabase.auth.signOut();setApps([]);setTasks([]);}}}><LogOut size={17}/></button></div></header>
  <main>
+ {knowledgeOpen&&(session||demo)?<Knowledge key={demo?'demo':session!.user.id} demo={demo} onClose={()=>setKnowledgeOpen(false)}/>:null}
  {demo?<div className="demo-banner"><span>Preview mode · Illustrative data. Changes stay in this session.</span><button onClick={()=>{setDemo(false);setApps([]);setTasks([]);}}>Exit preview <X size={14}/></button></div>:null}
  {error?<div className="alert error" role="alert"><TriangleAlert size={18}/><span>{error}</span><button onClick={()=>setError('')} aria-label="Dismiss error"><X size={16}/></button></div>:null}
  {notice?<div className="alert success" role="status"><CheckCircle2 size={18}/>{notice}<button onClick={()=>setNotice('')} aria-label="Dismiss notification"><X size={16}/></button></div>:null}

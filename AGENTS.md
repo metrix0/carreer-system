@@ -1,86 +1,88 @@
-# Career Radar implementation and operations
+# Career Radar
 
-Keep the product to one focused dashboard. Preserve data and stage history. Never ship private tracker exports, email text, credentials, or personal declarations in public GitHub source or client build output.
+Move verified, eligible applications toward interviews. Dashboard: https://carreer.johnvitor.com.
 
-## Source of truth
+## Load once per run
 
-The dashboard reads Supabase project `obwktteidluebaksfhju`. Read the current schema before writes. Use the CARREER SYSTEM Supabase connection; never another project's connection. Keep the legacy tracker as a backup during cutover. Do not pause, replace or claim to have migrated background execution unless its replacement is verified.
+This file is the maintained operating contract. Project and automation prompts only select the task and point here; do not copy rules or candidate facts into them. Follow the user's current instructions when they change the task or a saved preference.
 
-## Worker / agent writes
+1. Read this file from the default branch of `metrix0/carreer-system`.
+2. Use the **CARREER SYSTEM** Supabase connection, project `obwktteidluebaksfhju`. Inspect the live schema before writes. Load `applications`, `tasks` and relevant `stage_events`, including all queue pages.
+3. Load the single private **Candidate Knowledge** record:
+   ```sql
+   select decrypted_secret::jsonb as knowledge, updated_at
+   from vault.decrypted_secrets where name = 'career_radar_candidate_answers';
+   ```
+   Candidate facts, contacts, availability, eligibility preferences, approved declarations, compensation and writing templates live there. Use approved declarations only within their stated scope; never default unrelated legal answers to No. Skip unverifiable optional fields and ask only for genuinely missing required facts after checking authorized records. Convert grades using the saved scale (for example 8/10 = 80/100), without claiming an official transcript. Read only required identity keys from `career_radar_candidate_identity` for an authorized form. If access fails, pursue Agent recovery instead of asking for saved answers again.
 
-- `applications.source_key` is unique. Reuse existing keys; deduplicate by employer requisition and URL before inserting. Read `source_data` and existing history when reconciling imported aliases.
-- Stage values: `discovered`, `subscribed`, `screening`, `interview`, `offer`, `hired`. `screening` means an active post-submission step, not necessarily a completed or passed assessment. Do not infer interviews from an automated assessment invitation.
-- `outcome`: `active`, `rejected` (explicit individual rejection), `closed` (vacancy ended), `excluded` (confirmed ineligible).
-- Set `submission_verified=true` only with reliable employer or platform confirmation, put the actual receipt in `confirmation`, and only populate `submitted_at` when its actual date is known. Sent email or an uploaded CV alone is not receipt confirmation. Do not reapply to an email-sent process without checking for duplicates and delivery.
-- For each verified Agent submission, save the actual CV filename/version, salary expectation entered (with currency and period if supplied), and non-sensitive custom question/answer pairs in `applications.source_data.submission_details`. Shape: `{"cv_version":"…","salary_expectation":"…","custom_answers":[{"question":"…","answer":"…"}]}`. Omit unknown or unused fields. Capture the answers from the successful attempt while they are available. Leave out CPF, RG, other identity numbers, filiation, date of birth, addresses, contact details, health/disability, demographic data, current/past pay, credentials and full form payloads. Preserve submitted wording where safe. Keep the advertised salary in `applications.salary`.
-- Save this snapshot with submission verification in the same update when possible. Use `jsonb_set(source_data, '{submission_details}', <snapshot>::jsonb, true)` with the existing `updated_at` concurrency check. Preserve other source data and existing verified details when checking receipts later. Backfill only details explicitly tied to a verified submission.
-- `tasks.status`: `pending`, `blocked`, `completed`. Blocked is a task state, not a Kanban stage. Capture `last_stage` from the application when creating a task. Include exact next action, responsible party, deadline and direct URL. Do not make waiting for recruiter responses a blocked task.
-- To complete a task, update both `status='completed'` and `completed_at` atomically. Record stage completion only after verification.
-- Application inserts and stage/outcome changes append `stage_events` automatically. Do not directly alter that history. Use `updated_at` as an optimistic-concurrency condition when updating records and refresh on conflict.
-- Workers can use the authorized Supabase MCP connection or a server-only service credential. No service credentials belong in browser code, public files, shell arguments or logs.
+Use the live tracker for process state and linked Gmail/portal evidence for verification. The old sheet, imports and previous chats are historical context, not execution dependencies. Do not repeatedly read unchanged sources during a run; refresh affected rows before writes or when evidence changes.
 
-## Private candidate profile
+## Maintain one copy
 
-At the start of each recruiting run, load the standing answers from the authorized Career Radar Supabase connection. Use `SELECT decrypted_secret::jsonb FROM vault.decrypted_secrets WHERE name = 'career_radar_candidate_answers';` before filling forms or assigning candidate actions. Retrieve only required identity fields from the separate `career_radar_candidate_identity` record. Keep private values out of public source, the dashboard, task notes, prompts, and reports. If access fails, track technical recovery as Agent work. Only ask the candidate for a required answer that is missing from the profile and authorized records.
+- Save candidate-confirmed facts and approved answers in Candidate Knowledge using `vault.update_secret`, preserving unrelated fields. Within one transaction, call `vault.update_secret(id)` without replacement values to acquire its row lock, then re-read the current document, apply the targeted change and call the setter with the merged JSON. Keep evidence/date for changed facts. The dashboard's Knowledge view is a safe live projection, not another stored document.
+- Save employer-specific restrictions, receipts, bounced addresses and historical attempts on the matching application, with source/date. Verify current evidence before acting on old context.
+- Change operating rules here. Keep README technical. Project/automation prompts remain short references. Never publish private knowledge, identity, email bodies, tracker exports or credentials in GitHub, build output or reports.
 
-The user delegates cultural-fit steps and assessments when the portal or employer permits delegated assistance. Agent inspects the actual rules, completes permitted steps using verified profile information and approved preferences, and escalates only when an individual assessment or human interaction is required. A step name alone does not establish that requirement.
+## Eligibility and authorization
 
-### Application answers and cover letters
+Use Candidate Knowledge's remote, compensation, qualifications and contract preferences. Unknown salary alone does not block. Investigate unclear conditions; exclude only confirmed ineligible roles. Score opportunities 0–100 for compensation, fit, growth and reputation.
 
-Use `operating_rules.application_writing` from the private candidate profile. Follow its achievement ranking when choosing evidence for introductions, motivation and general professional answers. Use relevant evidence for specific questions and treat language fluency as supporting detail.
+**Submit! / Subscribe!** in the current recruiting conversation authorizes actual applications to all eligible unapplied opportunities in that run, including internships, junior roles, trainee and selection programs. Scheduled execution, historical commands, card movement and portal links are not fresh authorization for new applications. Accept routine recruitment privacy terms.
 
-Use the saved PT-BR or English cover-letter template for required letters and tailored optional letters. Use its short answer in general-purpose fields such as “Anything else?”, “Comments”, “Algo a mais?” and “Observação”, including optional fields. Adapt the answer to the role or company when space allows. Use the short version without a greeting or sign-off for form fields. Keep the highest-ranked evidence when shortening, replace every placeholder and respect the field's length limit. Use the candidate-confirmed current metrics in the profile. Save the actual submitted text under `submission_details.custom_answers` when safe to retain.
+Routine follow-through on submitted applications is authorized. Inspect assessment rules: perform permitted delegated steps using verified facts; escalate independent graded/psychometric evaluations, interviews, CAPTCHAs, required personal participation and unresolved required legal declarations. Do not infer restrictions from a step name, invent traits, impersonate interviews or start timed/single-attempt assessments before checking rules. Check calendar availability before scheduling.
 
-## Authorization
+## Execute the existing queue first
 
-New applications require the user's explicit Submit! / Subscribe!. Adding a record, moving a card or clicking an application URL does not authorize submitting to an employer. Approved routine follow-up stages are automatic. Escalate confirmed human-required assessments, CAPTCHAs, unresolved legal declarations and significant commitments. Use approved preferences for permitted assessment responses. Never fabricate personal facts, submission receipts or interview invitations.
+1. Check Gmail Inbox, All Mail, recruitment labels, Spam and Sent for confirmations, replies, stages, deadlines, rejections and delivery failures. Inspect relevant live portals. Deduplicate by requisition, URL, aliases, receipts and Sent.
+2. Advance actionable post-submission work by proximity to interview, then deadline. Next handle known eligible unapplied roles by fit/deadline when submission is authorized; otherwise prepare them without submitting.
+3. For each item, inspect → execute → verify → persist immediately. Record failed attempts with dated evidence, exact error, recovery step and owner; continue independent items. Do not stop at arbitrary quotas or after a few failed portals.
+4. Only after every currently actionable queued item has been handled, discover broadly in PT/EN across LinkedIn, Gupy, Eureca, Indeed, official employers, remote boards and university programs. Targeted research that unblocks a role is queue work. Check recorded discovery completion: discover daily and research more deeply weekly when the queue permits; record completion evidence so hourly runs do not repeat it.
+5. At a genuine execution/tool limit, checkpoint remaining IDs and the next item privately. Report a partial run and defer discovery; never promise an unscheduled continuation.
 
-### Recruiting email
+Use `application_writing` in Candidate Knowledge for achievement ranking, full PT-BR/English letters and short general-purpose answers, including optional “Anything else?”, “Comments”, “Algo a mais?” and “Observação” fields. Follow employer prompts, replace placeholders, use the form's language/length limit, retain the strongest relevant evidence, and save safe wording actually submitted.
 
-- Proceed with routine recruiting email when it is already authorized and the full thread, sender/recipient, requested action, wording, any attachment and channel are clear and verified. Check the thread and Sent first to avoid duplicates or bounced addresses.
-- If there is any doubt, even minor, about intent, authority, recipient, content, attachments, sensitivity, delivery or the appropriate channel, leave the email unanswered and route it to Candidate in **Your actions → Emails**. Apply the same rule to privacy, identity, documents and personal-data corrections, and escalate anything that requires the candidate's judgment or participation.
-- Use one `tasks` row per Gmail thread, keyed by `gmail_thread_id` (the actual Gmail thread ID, never a message ID), with `responsible='Candidate'`, `status='pending'` and the direct Gmail conversation link in `url`. Prefer the connected Gmail result's account-qualified `display_url`, replacing its message-ID fragment with `#all/<threadId>`. Link the known application and capture its current stage, or leave both `application_id` and `last_stage` null if unmatched. Use a short action title, a minimal non-sensitive summary in notes and a deadline only if verified. Keep the body, subject if sensitive, and all attachments and personal details out of the tracker and reports.
-- Keep dismissed tasks hidden. Reopen a completed email task only for a new incoming message after its completion that requires action, and clear `completed_at` atomically. Complete pending tasks only after verifying the candidate resolved the action. Use the unique thread key to prevent duplicate tasks in concurrent runs. If a tracker write fails, surface the original Gmail conversation link to the candidate in the run update.
+## Recruiting email
 
-## Recruitment run contract
+Send routine recruiting email only when already authorized and the full thread, recipient, intent, wording, attachments and channel are clear and verified. Check thread and Sent for duplicates/delivery failures. **If uncertain about any of these, even slightly, leave it unanswered and create a Candidate email action.** Apply this same uncertainty test to privacy, identity, documents and corrections; needing a reply alone does not require escalation. Resolve/verify recipients; never invent contacts or repeat bounced messages.
 
-For recruiting work, read the live Supabase applications, tasks and stage_events before acting. The spreadsheet is historical backup, not an execution dependency.
+Use one `tasks` row keyed by the actual `gmail_thread_id`, never a message ID: `responsible='Candidate'`, `status='pending'`. Use the connected Gmail account-qualified `display_url` with `#all/<threadId>` (fallback `https://mail.google.com/mail/u/0/#all/<threadId>`). Link a known application/current `last_stage`, or leave both null. Store a short action/minimal safe summary; no body, sensitive subject, attachments or personal details. Add only verified deadlines.
 
-Submit! / Subscribe! authorizes actual applications to all eligible, unapplied opportunities in the current run.
+Respect dismissals. Reopen completed email tasks only for new actionable inbound mail after completion, clearing `completed_at` atomically. Complete only after verified resolution. If saving fails, include the Gmail link in the run update. Report new email handoffs even without other pipeline changes.
 
-Work the existing pipeline before searching for new opportunities. Inspect all pages of the live queue, skip completed and [dismissed] tasks, and respect concurrent updates. Handle actionable post-submission steps first, ordered by proximity to interview and deadline, then work known eligible unapplied roles by fit and deadline when the current run authorizes submission.
+## Tracker contract
 
-Start broad discovery only after every existing item that can advance in the current run has had its next step executed, verified and saved. A blocker with no available next step in this run can stay open with dated evidence, an owner and a specific recovery step. Continue with the other queued items. Targeted research to unblock an existing opportunity counts as queue work. If the run reaches a time or tool limit while actionable items remain unattempted, checkpoint the remaining work and defer discovery.
+- `applications.source_key` is unique. Reuse records; preserve `source_data`, evidence, aliases and history. Refresh before writing; use `updated_at` for optimistic concurrency and retry from fresh state on conflict.
+- Stages: `discovered → subscribed → screening → interview → offer → hired`. Screening is an active post-submission step, not proof of passing. Assessments are not interviews. Keep the real stage while blocked.
+- Outcomes: `active`, `rejected` (explicit individual rejection), `closed` (vacancy ended), `excluded` (confirmed ineligible). Silence is neither rejection nor a blocker.
+- `submission_verified=true` requires a reliable employer/ATS receipt or confirmation email retained in `confirmation`. Set `submitted_at` only when the actual date is known. Uploading a CV, filling a form or sending email alone is not confirmation.
+- With each verified Agent submission save `source_data.submission_details`: `{"cv_version":"…","salary_expectation":"…","custom_answers":[{"question":"…","answer":"…"}]}`. Capture the successful attempt's actual wording; omit unknown/unused fields. Exclude identity numbers, filiation, birth dates, addresses, contact details, health/disability, demographics, current/past pay, credentials and full form payloads. Advertised salary stays in `applications.salary`. Preserve other metadata; backfill only with evidence tied to the successful submission. Verify persistence.
+- Tasks require concrete unfinished work. Use `responsible` exactly `Candidate` or `Agent`; split shared work. Candidate means a required personal answer/action; research, technical recovery and retries belong to Agent. Capture `last_stage`, verified deadline and direct URL. Preserve notes starting `[dismissed]`; do not recreate those tasks.
+- Waiting for RH belongs in application status/next_action, not a task. Do not create tasks merely for a discovery/submission or vague “monitor/check later/apply”. Keep concrete receipt/bounce checks distinct.
+- Complete only after verification, atomically setting `status='completed'` and `completed_at`. Never complete, dismiss or reassign work to lower a counter. Keep failed attempts open with recovery evidence. Triggers maintain `stage_events`; do not rewrite history.
+- Compare open Agent work before/after every Submit! run. Explain real new unfinished actions if backlog increases. Verify writes and respect access controls.
 
-Scheduled runs use the same ordering for authorized follow-through, research and recovery. Keep applications that require a fresh Submit! ready in the tracker.
+## Browser and development
 
-For each actionable item: inspect current evidence, perform the authorized next step, verify the result and persist it immediately. Complete tasks atomically with completed_at only after verified completion. An attempted but unsuccessful submission stays open with dated evidence, exact error, next recovery step and owner. Record attempts in task notes without erasing prior evidence. Re-read before writing and do not duplicate tasks.
+Before RDC, read `C:\Users\Usuario\AI-Apps\READMEAI.md`. Recruitment portals use the persistent Edge profile `%LOCALAPPDATA%\AI-Browser\UserData`, existing context on `http://127.0.0.1:9222`, exclusive control lock and human priority. Check `%LOCALAPPDATA%\AI-Browser\human-handoff.json` before control; leave candidate tabs untouched until explicit return of control. Preserve the exact login/CAPTCHA tab. Never close the shared browser, cycle profiles, export sessions or create replacement contexts.
 
-## Agent-action backlog invariant
+When asked to work headlessly, keep validation headless in isolated QA state; do not activate the visible browser. If shared-session work cannot run under the user's constraint, record the exact limitation and continue connector work. The dashboard launcher is for deliberate candidate clicks.
 
-The `AI actions` count must measure concrete unfinished **Agent** work, not how many discoveries, submissions, or employers are merely awaiting a response.
+Implement requested dashboard changes in the existing project; preserve permissions/data. Run `npm run typecheck`, `npm test`, `npm run build`, and supported browser checks for visible changes. Pin dependencies and commit the lockfile. Privileged database helpers belong in a private schema with an explicit confirmed-owner check; public RPC wrappers use invoker security. Never expose identity or broad Vault access to clients.
 
-- **Do not create an Agent task just because a job was discovered or an application was submitted.** Store discoveries in `applications`; store passive recruiter waiting and last receipt in `applications.next_action`, `source_status` and `notes`. Waiting alone is not an active task.
-- Create tasks only for specific actionable research, technical recovery, or a currently due post-submission step that could not be finished in this run. Never create generic `monitor`, `follow up`, `await RH`, `check later`, or `apply` tasks without a verified concrete next action and correct owner.
-- When an actionable task is actually finished (e.g. official submission receipt obtained, a discrete Gmail Sent/DSN check performed, a live URL verified), complete that existing task **in the same run** with `status='completed'`, `completed_at=now()` and dated evidence. The *application* may still await RH and must stay in its real stage. An unresolved technical recovery must stay open; a failed attempt is not a completion.
-- Do not mechanically mark pending tasks complete, dismiss them, delete them, or reclassify candidate tasks just to improve the KPI. Preserve stage, deadline, source, notes and prior events. Check for actual duplicate work and treat discovered opportunities as pipeline records rather than a new action queue for every row.
-- Before and after every Submit! run, query the current open Agent task count and report `before → after`. If it increases, disclose **which real new uncompleted actions** caused the increase and which previously open tasks were completed; do not present backlog growth as progress.
-- A paused Career Radar automation is not performing passive monitoring. Never claim otherwise or silently reactivate it; preserve its existing enabled/paused state until an explicitly authorized change. Checking the mailbox during the current recruiting run does not promise future scheduled checks.
+## Automation and results
 
-Do not end after a few portals fail or an arbitrary quota. Continue through independent items. If a genuine execution/tool limit prevents finishing, checkpoint the exact remaining task IDs and next item in private tracker notes and report that the run is partial; never imply all work was attempted or promise an unscheduled continuation.
+Preserve the automation's schedule and enabled/paused state unless the user requests a change. Never claim future monitoring from a current check or a paused task.
 
-Use responsible exactly Candidate or Agent. Split shared work into distinct tasks. Research, URL recovery and technical retries belong to Agent. Candidate tasks require a specific personal answer, assessment, human verification or email review. Waiting alone is application status, not an actionable task; retain concrete receipt/bounce checks separately. Never mark waiting, a failed attempt or dismissal as successful completion to reduce the counter.
+At the existing **20:18 America/Sao_Paulo** run only, publish the cumulative recruiting report to `https://johnvitor.com/ai` through its supported workflow. Check prior delivery, verify receipt and prevent duplication. Other runs do not access that destination. If publication fails, report the exact limitation.
 
-Before RDC, read C:\Users\Usuario\AI-Apps\READMEAI.md. All ordinary portal browsing uses the shared visible Edge profile at %LOCALAPPDATA%\AI-Browser\UserData via CDP http://127.0.0.1:9222, reusing its existing context and coordinating the exclusive control lock. Keep CAPTCHA/login handoffs in the same tab. Do not cycle through old profiles or create replacement/headless contexts. Do not close the browser or export session secrets. If blocked there, continue independent connector work.
+End recruiting runs with a short update: verified submissions, completed actions, Agent count before → after, and new candidate-only actions with links/deadlines. Disclose material failures/unattempted work and delivery status when relevant. Link the dashboard; omit the old seven-section/full-pipeline report unless asked. State zero progress honestly. Never claim execution, completion, deployment or scheduling without confirmation.
 
-The dashboard replaces the old seven-section report. End with a short update: verified new submissions and completed actions, remaining AI count (before → after when known), and specific new candidate-only blockers with links/deadlines. Mention material failures/unattempted work briefly. Link https://carreer.johnvitor.com for full details. A zero or unchanged count must be stated honestly. Do not repeat the full pipeline or a 1–7 summary unless explicitly requested.
+<!-- BEGIN:nextjs-agent-rules -->
 
-## Checks
+## This is NOT the Next.js you know
 
-Run `npm run typecheck`, `npm test`, and `npm run build` after substantive changes. Browser-check visible changes using the supported preview. Do not weaken RLS to simplify preview or tests. Keep dependency versions pinned and commit `package-lock.json`.
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
-## Candidate browser handoff
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
-Dashboard “Your actions” links use the per-user `career-browser:` launcher (source in `scripts/shared-browser`). Before controlling the shared browser, check `%LOCALAPPDATA%\AI-Browser\human-handoff.json`. Its presence means Candidate is working: do not navigate/reload/automate candidate tabs or remove the marker until the user explicitly returns control. Keep the exact tab/context for login and CAPTCHA. Independent connector work may continue. The marker contains tab ID/time only; do not log portal URLs or session secrets.
-
-When asked to work headlessly, all browser validation must stay headless in isolated QA state. Never launch/activate a visible browser as a test. The candidate may deliberately open the shared visible session through the dashboard launcher; do not do that on their behalf during headless work.
+<!-- END:nextjs-agent-rules -->
