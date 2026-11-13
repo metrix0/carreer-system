@@ -1,69 +1,30 @@
 # Career Radar
 
-A focused Next.js dashboard for the path from opportunity to interview. Supabase stores the live pipeline; no recruitment data ships in the public repository or static build.
+Private recruitment workspace: https://carreer.johnvitor.com. Next.js dashboard, Supabase live data, Git-triggered Vercel deployment.
 
-## Dashboard
+## One home for each kind of information
 
-- Six vertical Kanban columns: Discovered, Subscribed, Passed / screening, Interview, Offer, Hired.
-- Search, drag and drop, application detail dialogs, stage history, archived outcomes and manual opportunity creation.
-- Blocked and remaining actions with the stage captured when the task was created. Rank by stage proximity to interview, then deadline. Waiting for a recruiter is not a blocked task.
-- Weekly verified submissions compared with the previous week, active applications, interviews and conversion, and open actions. Weeks start Monday at midnight in America/Sao_Paulo. Unknown historical dates are disclosed and excluded from weekly totals.
-- Supabase authentication and owner-only RLS. The preview uses visibly labeled synthetic data and never writes to the live workspace.
+| Information | Maintained source |
+| --- | --- |
+| Workflow, permissions and verification | [AGENTS.md](AGENTS.md) |
+| Candidate facts, approved answers and writing templates | Private Supabase Candidate Knowledge (`career_radar_candidate_answers`) |
+| Required sensitive identity fields | Separate protected Vault record |
+| Applications, actions, evidence and history | Supabase `applications`, `tasks`, `stage_events` |
 
-## Run
+The dashboard's **Knowledge** button reads a safe, owner-only projection of the same encrypted record on demand. It stores no copy and excludes identity, declarations and current/past pay. Gmail and employer portals provide original evidence; the tracker links to it. Historical imports are backups.
 
-```sh
-npm ci
-npm run dev
-npm run typecheck
-npm test
-npm run build
-```
+## Project prompt
 
-Node 20.9+ is required. The build exports the Next.js app to `out/`; Vercel detects Next.js automatically. The checked-in publishable Supabase settings are deliberately public and can be overridden through `.env.local` using `.env.example`. Never use a service-role key in a `NEXT_PUBLIC_` variable.
+Use this short entry point in the Recruiting project settings. Keep operating rules and candidate facts in their maintained sources:
 
-## Authentication setup
+> Manage Career Radar. Before recruiting or development work, read and follow the current https://github.com/metrix0/carreer-system/blob/main/AGENTS.md. Load the live tracker and private Candidate Knowledge as directed there. Follow my current request; save durable corrections in the appropriate source. Keep replies brief.
 
-The first visit requires creating a Supabase account and confirming the email. Only the confirmed workspace owner email provisioned in `private.owner_access` has access to any records. Other signed-in users see no rows and cannot create or update records.
+The existing automation also references AGENTS.md. Its schedule and enabled state are managed in Automations; README does not assert execution state.
 
-In Supabase Auth URL Configuration, set Site URL to the deployed application URL and allow the same redirect URL. Configure email delivery for the owner's address (Supabase's default email service may restrict delivery to project team addresses). Sign-in with password, email confirmation, and magic links use the Supabase Auth client; no credentials are stored in this repository.
+## Development
 
-## Database
+Node 20.9+. Run `npm ci`, `npm run dev`. Required checks: `npm run typecheck`, `npm test`, `npm run build`.
 
-`supabase/schema.sql` describes the clean schema. The live project's schema was applied using Supabase migrations. `applications` has a unique source key, original evidence, verified submission state, original tracker status and full source data. `tasks` references applications. Database triggers append `stage_events`; clients cannot rewrite history. Private import snapshots retain all original source tabs.
+The build exports `out/`. Public Supabase settings are in `lib/supabase.ts`, with optional overrides in `.env.local`. Never put a privileged key in client code. Owner-only RLS protects pipeline data; only the confirmed owner can read Knowledge through a narrow RPC. The preview uses synthetic data.
 
-The owner allowlist is provisioned separately and is never client-writable. All public tables enable RLS. Private snapshots are not exposed through the client Data API. The audit trigger runs AFTER an application is inserted so its foreign key exists; timestamps are updated in a separate BEFORE UPDATE trigger.
-
-## Import
-
-Source: the existing Career Radar Google Sheets workbook. Its original opportunities, processes, exclusions and rules are retained in a private snapshot. A repeated Gupy requisition becomes one application with both original rows. Historical process-only entries stay unverified until reconciled. Employer closure is separate from individual rejection. Email-sent and drafts do not become confirmed submissions. Assessment invitations never become interviews.
-
-To prepare an import from a privately exported JSON object with `opportunities`, `processes`, `discarded`, `rules` arrays (each includes its header row):
-
-```sh
-node --import tsx scripts/prepare-import.ts /private/tracker.json /private/import.sql
-```
-
-Review the summary and SQL, then apply through an authorized database connection. Both files contain private recruitment data: keep them outside this repository. Application imports use `ON CONFLICT DO NOTHING` and task imports skip existing matching titles, preserving later app edits. Full source snapshots are append-only.
-
-## Recruitment automation
-
-This milestone implements the dashboard, database, historical import and agent write contract. The existing hourly Career Radar automation has been updated to read this Supabase project and persist verified results after every stage, while retaining the sheet as a backup. Its schedule is unchanged. That task remains the execution engine for Gmail and portal follow-through; browser automation does not run inside the dashboard. End-to-end execution of a future scheduled run has not been verified by this build. See `AGENTS.md` for the contract. The app refreshes its Supabase data on focus, every minute, and on demand.
-
-New submissions still require an explicit Submit! / Subscribe! instruction. Automatic follow-up stages may proceed within the user's approved rules. Human-required assessments and legal declarations become blocked actions. A stage change is a tracking update, never an application submission.
-
-Recruiting runs handle clear, authorized routine emails. If there is any doubt, the message appears under **Your actions → Emails**, with a direct link to the original Gmail conversation.
-
-## Validation
-
-Six focused tests cover São Paulo week boundaries, dated and verified submission counts, task priority, safe links, import classification, and requisition deduplication. A production build and TypeScript check are required. Database verification includes imported totals, append-only stage history and authenticated non-owner RLS isolation. Browser checks cover dashboard preview interactions; real owner sign-in requires the owner's confirmed session.
-
-### Shared browser links (Windows)
-
-“Your actions” portal link buttons use `career-browser:open?url=…` to open the same visible Edge profile as RDC/Playwright. On the Windows PC run `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/shared-browser/install.ps1` once. This registers a per-user launcher; the browser may ask permission to open it. Other computers need their own setup. Email and AI action links open in a normal browser tab.
-
-The launcher uses `%LOCALAPPDATA%\AI-Browser\UserData` and loopback CDP port 9222. It remembers each task’s tab ID, so reopening it preserves a login/CAPTCHA redirect; otherwise it reuses a matching URL or opens a new tab in the existing context. It never imports cookies, closes the browser, or creates an incognito context. CAPTCHA and login remain in that tab; approvals can expire.
-
-Opening a candidate link writes `%LOCALAPPDATA%\AI-Browser\human-handoff.json` containing only the tab ID and handoff timestamp. Agents must check this marker before browser control and leave candidate work untouched. Resume only after the candidate explicitly hands control back; remove the marker then, without closing tabs. The launcher only accepts HTTPS destinations and invokes no shell with URL content. To uninstall, remove `HKCU\Software\Classes\career-browser`; profile data stays untouched.
-
-Validation must stay headless while the candidate uses the PC. Compile `SharedBrowser.cs` with `/define:QA /target:exe` to test the same launcher logic in an isolated headless profile under `%TEMP%\CareerBrowserLauncher-QA` on port 19322. Never invoke the installed visible launcher as an automated smoke test. Its visible mode is for an explicit candidate click.
+Database baseline: `supabase/schema.sql`; incremental changes: `supabase/migrations/`. Private historical imports use `scripts/prepare-import.ts` and stay outside Git. Shared browser launcher setup: `scripts/shared-browser/install.ps1`. Operational browser and privacy rules live only in AGENTS.md.
