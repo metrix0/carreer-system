@@ -42,7 +42,6 @@ export default function Knowledge({demo,onClose}:{demo:boolean;onClose:()=>void}
       </details>
       <details><summary>Application answers</summary>
         <label className="knowledge-language">Language<select value={language} onChange={e=>setLanguage(e.target.value)}><option value="pt-BR">Português</option><option value="en">English</option></select></label>
-        <h4>Short answer</h4><p className="knowledge-template">{knowledge.writing.short_answer[language]}</p>
         <h4>Cover letter</h4><p className="knowledge-template">{knowledge.writing.cover_letter[language]}</p>
       </details>
       <p className="knowledge-note knowledge-footer">Updated {new Date(knowledge.updated_at).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'})} · <a href="https://github.com/metrix0/carreer-system/blob/main/AGENTS.md" target="_blank" rel="noreferrer">Operating rules ↗</a></p>
