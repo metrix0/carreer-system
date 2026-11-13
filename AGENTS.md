@@ -27,9 +27,9 @@ The user delegates cultural-fit steps and assessments when the portal or employe
 
 ### Application answers and cover letters
 
-Use `operating_rules.application_writing` from the private candidate profile. Pick one or two role-relevant strengths for professional introductions, motivation and experience answers. Fill optional professional fields when a verified, specific answer adds value.
+Use `operating_rules.application_writing` from the private candidate profile. Follow its achievement ranking when choosing evidence for introductions, motivation and general professional answers. Use relevant evidence for specific questions and treat language fluency as supporting detail.
 
-Use the saved PT-BR or English cover-letter template in the posting's language. Provide it for required letter fields and for optional ones when a concrete role or company detail supports meaningful tailoring. Personalize the opening, select the strongest relevant evidence, replace every placeholder and respect the form's length limit. Use employer-facing metrics consistent with the CV being sent. Save the actual letter under `submission_details.custom_answers` when submitted and safe to retain.
+Use the saved PT-BR or English cover-letter template for required letters and tailored optional letters. Use its short answer in general-purpose fields such as “Anything else?”, “Comments”, “Algo a mais?” and “Observação”, including optional fields. Adapt the answer to the role or company when space allows. Use the short version without a greeting or sign-off for form fields. Keep the highest-ranked evidence when shortening, replace every placeholder and respect the field's length limit. Use the candidate-confirmed current metrics in the profile. Save the actual submitted text under `submission_details.custom_answers` when safe to retain.
 
 ## Authorization
 
