@@ -2,6 +2,19 @@
 
 Move verified, eligible applications toward interviews. Dashboard: https://carreer.johnvitor.com.
 
+## One recruiting run at a time
+
+All recruiting execution (Submit!/Subscribe!, scheduled follow-through, discovery and recovery) shares one database lease across every chat. Read-only dashboard viewing, candidate knowledge corrections and development are independent.
+
+- After reading this file, before any recruiting write or Gmail/portal/browser action, generate a fresh UUID once and keep it as this run's ID. Call `select private.recruiting_lock('<run_uuid>'::uuid,'acquire');` through the authorized Career Radar SQL connection.
+- Proceed only on `true`. On `false`, say “A recruiting run is already active” and stop this run. Do not submit, send, browse portals, create tasks, force-release another run, poll in a loop or start an automatic retry. If acquisition errors, stop recruiting execution and report the error; never proceed unlocked.
+- Renew with the same UUID: `select private.recruiting_lock('<run_uuid>'::uuid,'renew');` before each external action or tracker write, at least once per minute while working, and immediately after a long tool call. Confirm `true` immediately before a final submission/send. Bound individual browser actions below the 15-minute lease. If renewal returns false or errors, stop all further recruiting actions: that run no longer owns the lock. Do not reacquire under the old run ID.
+- Persist verified results promptly. Before retrying an interrupted/uncertain action, inspect current tracker, portal receipts and Sent for duplicates; lease expiry is not proof that an employer action failed.
+- On completion, error, handoff or an execution limit, checkpoint unfinished work, then release only your own UUID with `select private.recruiting_lock('<run_uuid>'::uuid,'release');`. A crashed run expires after 15 minutes without renewal. Never retain a lease while waiting for the candidate.
+
+The database atomically selects one owner; this contract also applies to the existing automation because it loads this file.
+
+
 ## Load once per run
 
 This file is the maintained operating contract. Project and automation prompts only select the task and point here; do not copy rules or candidate facts into them. Follow the user's current instructions when they change the task or a saved preference.
