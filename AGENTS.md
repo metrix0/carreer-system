@@ -31,7 +31,13 @@ New applications require the user's explicit Submit! / Subscribe!. Adding a reco
 
 For recruiting work, read the live Supabase applications, tasks and stage_events before acting. The spreadsheet is historical backup, not an execution dependency.
 
-Submit! / Subscribe! authorizes actual applications to all eligible, unapplied opportunities in the current run. Process the existing Agent action queue as work to execute, not merely a list to summarize. Prioritize post-submission progress, then initial applications by fit and deadline. Inspect all pages of the queue; exclude completed and [dismissed] tasks and respect concurrent updates.
+Submit! / Subscribe! authorizes actual applications to all eligible, unapplied opportunities in the current run.
+
+Work the existing pipeline before searching for new opportunities. Inspect all pages of the live queue, skip completed and [dismissed] tasks, and respect concurrent updates. Handle actionable post-submission steps first, ordered by proximity to interview and deadline, then work known eligible unapplied roles by fit and deadline when the current run authorizes submission.
+
+Start broad discovery only after every existing item that can advance in the current run has had its next step executed, verified and saved. A blocker with no available next step in this run can stay open with dated evidence, an owner and a specific recovery step. Continue with the other queued items. Targeted research to unblock an existing opportunity counts as queue work. If the run reaches a time or tool limit while actionable items remain unattempted, checkpoint the remaining work and defer discovery.
+
+Scheduled runs use the same ordering for authorized follow-through, research and recovery. Keep applications that require a fresh Submit! ready in the tracker.
 
 For each actionable item: inspect current evidence, perform the authorized next step, verify the result and persist it immediately. Complete tasks atomically with completed_at only after verified completion. An attempted but unsuccessful submission stays open with dated evidence, exact error, next recovery step and owner. Record attempts in task notes without erasing prior evidence. Re-read before writing and do not duplicate tasks.
 
