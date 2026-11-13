@@ -44,8 +44,6 @@ class SharedBrowser {
     for(int i=0;i<80 && !Ready();i++) Thread.Sleep(100);
     if(!Ready()) throw new Exception("The shared Edge session is unavailable. If it is already open without debugging, close it normally and try again.");
    }
-   // Human handoff takes priority. Agents must leave this tab untouched.
-   var marker = Path.Combine(root,"human-handoff.json");
    string id = null;
    string savedTab = null;
    var mapping = task == null ? null : Path.Combine(root,"task-"+task+".tab");
@@ -54,11 +52,9 @@ class SharedBrowser {
    foreach(Dictionary<string,object> tab in tabs) {
     if(tab.ContainsKey("type") && (string)tab["type"] == "page" && tab.ContainsKey("url") && ((string)tab["id"] == savedTab || (string)tab["url"] == target.AbsoluteUri)) { id=(string)tab["id"]; break; }
    }
-   File.WriteAllText(marker,json.Serialize(new { owner="Candidate", started_at=DateTime.UtcNow.ToString("o"), tab_id=id, instruction="Human session: do not navigate, reload or automate this tab. Resume only after candidate handoff." }));
    if(id == null) {
     var tab = json.Deserialize<Dictionary<string,object>>(Request("/json/new?"+Uri.EscapeDataString(target.AbsoluteUri),"PUT"));
     id=(string)tab["id"];
-    File.WriteAllText(marker,json.Serialize(new { owner="Candidate", started_at=DateTime.UtcNow.ToString("o"), tab_id=id, instruction="Human session: do not navigate, reload or automate this tab. Resume only after candidate handoff." }));
    }
    if(mapping != null) File.WriteAllText(mapping,id);
    Request("/json/activate/"+Uri.EscapeDataString(id));
