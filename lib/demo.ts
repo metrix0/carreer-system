@@ -8,5 +8,11 @@ export function demoData(){
   custom_answers: [{question: 'When can you start?', answer: 'Immediately.'}],
  };
  const tasks:Task[]=[{id:'task1',application_id:'demo3',title:'Choose an interview time',status:'blocked',last_stage:'interview',responsible:'Candidate',deadline:null,url:'',notes:'Demo action',created_at:now,completed_at:null},{id:'task2',application_id:'demo2',title:'Complete technical assessment',status:'blocked',last_stage:'screening',responsible:'Candidate',deadline:null,url:'',notes:'Demo action',created_at:now,completed_at:null},{id:'task3',application_id:'demo4',title:'Verify remote eligibility',status:'pending',last_stage:'discovered',responsible:'Agent',deadline:null,url:'',notes:'Demo action',created_at:now,completed_at:null}];
+ tasks.push({
+  id:'demo-email',application_id:null,title:'Review a recruiter’s scheduling question',
+  status:'pending',last_stage:null,responsible:'Candidate',deadline:null,
+  url:'',notes:'Review the proposed times and reply in Gmail.',created_at:now,completed_at:null,
+  gmail_thread_id:'demo-thread',
+ });
  return {apps,tasks};
 }

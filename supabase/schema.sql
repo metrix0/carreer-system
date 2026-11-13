@@ -21,11 +21,24 @@ create table public.applications(
  constraint submission_time_verified check(submitted_at is null or submission_verified)
 );
 create table public.tasks(
- id uuid primary key default gen_random_uuid(),application_id uuid not null references public.applications(id) on delete cascade,
+ id uuid primary key default gen_random_uuid(),application_id uuid references public.applications(id) on delete cascade,
  title text not null check(length(trim(title))>0),status text not null default 'pending' check(status in ('pending','blocked','completed')),
- last_stage public.recruitment_stage not null,responsible text not null default 'Agent',deadline date,url text not null default '',notes text not null default '',
+ last_stage public.recruitment_stage,responsible text not null default 'Agent',deadline date,url text not null default '',notes text not null default '',
  created_at timestamptz not null default now(),completed_at timestamptz,
- constraint completion_consistent check((status='completed')=(completed_at is not null))
+ gmail_thread_id text,
+ constraint completion_consistent check((status='completed')=(completed_at is not null)),
+ constraint tasks_gmail_thread_id_key unique (gmail_thread_id),
+ constraint tasks_email_review_check check (
+  (gmail_thread_id is null and application_id is not null and last_stage is not null)
+  or (
+   gmail_thread_id is not null
+   and gmail_thread_id ~ '^[A-Za-z0-9_-]+$'
+   and responsible = 'Candidate'
+   and ((application_id is null) = (last_stage is null))
+   and url ~ '^https://mail[.]google[.]com/mail/u/([0-9]+/|[?]authuser=[A-Za-z0-9._+%@-]+)#all/[A-Za-z0-9_-]+$'
+   and split_part(url, '#all/', 2) = gmail_thread_id
+  )
+ )
 );
 create table public.stage_events(
  id uuid primary key default gen_random_uuid(),application_id uuid not null references public.applications(id) on delete cascade,

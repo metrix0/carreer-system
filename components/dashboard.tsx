@@ -1,7 +1,7 @@
 'use client';
 import {useCallback,useEffect,useMemo,useState,type FormEvent} from 'react';
 import type {Session} from '@supabase/supabase-js';
-import {Radar,ArrowUpRight,ArrowRight,Plus,Search,RefreshCw,LogOut,Check,ChevronDown,ExternalLink,Clock,ShieldCheck,TriangleAlert,Target,Inbox,ListFilter,Archive,CheckCircle2,X} from 'lucide-react';
+import {Radar,ArrowUpRight,ArrowRight,Plus,Search,RefreshCw,LogOut,Check,ChevronDown,ExternalLink,Clock,ShieldCheck,TriangleAlert,Target,Inbox,ListFilter,Archive,CheckCircle2,X,Mail} from 'lucide-react';
 import {supabase} from '@/lib/supabase';
 import {dateLabel,taskOwner,metrics,safeUrl,sortTasks,stages,stageLabels,type Application,type Stage,type StageEvent,type Task} from '@/lib/model';
 import {demoData} from '@/lib/demo';
@@ -32,8 +32,12 @@ export default function Dashboard(){
  async function addTask(e:FormEvent<HTMLFormElement>,app:Application){e.preventDefault();setSaving(true);const f=new FormData(e.currentTarget);const row={application_id:app.id,title:String(f.get('title')),status:String(f.get('status')),last_stage:app.stage,responsible:String(f.get('responsible')),deadline:String(f.get('deadline'))||null,url:app.source_url,notes:''};if(demo){setTasks(prev=>[...prev,{...row,id:crypto.randomUUID(),created_at:new Date().toISOString(),completed_at:null} as Task]);}else{const r=await supabase.from('tasks').insert(row).select().single();if(r.error)setError(r.error.message);else setTasks(prev=>[...prev,r.data as Task]);}setSaving(false);}
  const stats=metrics(apps,tasks);const filtered=apps.filter(a=>(archive?a.outcome!=='active':a.outcome==='active')&&`${a.company} ${a.position} ${a.source_key}`.toLowerCase().includes(query.toLowerCase()));
  const activeIds=useMemo(()=>new Set(apps.filter(a=>a.outcome==='active').map(a=>a.id)),[apps]);
- const queue=sortTasks(tasks.filter(t=>t.status!=='completed'&&activeIds.has(t.application_id))).filter(t=>{const a=apps.find(a=>a.id===t.application_id);return `${a?.company} ${a?.position} ${t.title}`.toLowerCase().includes(query.toLowerCase());});
- const openTasks=tasks.filter(t=>t.status!=='completed'&&activeIds.has(t.application_id));
+ const openTasks=tasks.filter(t=>t.status!=='completed'&&(t.gmail_thread_id||(t.application_id&&activeIds.has(t.application_id))));
+ const queue=sortTasks(openTasks).filter(t=>{
+  const app=apps.find(a=>a.id===t.application_id);
+  const searchable=[app?.company,app?.position,t.title,t.gmail_thread_id?'email':null];
+  return searchable.join(' ').toLowerCase().includes(query.toLowerCase());
+ });
  const humanTasks=openTasks.filter(t=>taskOwner(t)==='human');
  const aiTasks=openTasks.filter(t=>taskOwner(t)==='ai');
  function enterDemo(){const d=demoData();setApps(d.apps);setTasks(d.tasks);setDemo(true);setSynced(null);setError('');}
@@ -50,7 +54,54 @@ export default function Dashboard(){
  <section id="pipeline" className="pipeline"><div className="section-heading"><div><h2>Pipeline <span className="count">{filtered.length}</span></h2></div><div className="tools"><label className="search"><Search size={16}/><input aria-label="Search opportunities" placeholder="Search…" value={query} onChange={e=>setQuery(e.target.value)}/>{query?<button aria-label="Clear search" onClick={()=>setQuery('')}><X size={14}/></button>:null}</label><button className="icon-button outlined" aria-label="Refresh pipeline" disabled={loading} onClick={()=>demo?enterDemo():void refresh()}><RefreshCw size={16} className={loading?'spin':''}/></button></div></div><div className="pipeline-tabs"><button className={!archive?'chosen':''} onClick={()=>setArchive(false)}>Active <span>{apps.filter(a=>a.outcome==='active').length}</span></button><button className={archive?'chosen':''} onClick={()=>setArchive(true)}>Archive <span>{apps.filter(a=>a.outcome!=='active').length}</span></button></div>
  {loading&&apps.length===0?<div className="empty-panel">Loading your opportunities…</div>:archive?<div className="archive-list">{filtered.map(a=><button key={a.id} className="archive-row" onClick={()=>void open(a)}><span className="company-icon">{a.company.slice(0,2)}</span><div><strong>{a.company}</strong><p>{a.position}</p></div><span className={'badge '+(a.outcome==='rejected'?'danger':'neutral')}>{a.outcome}</span><ArrowUpRight size={16}/></button>)}{!filtered.length?<div className="empty-panel">No archived opportunities match your search.</div>:null}</div>:<div className="kanban">{stages.map(stage=>{const cards=filtered.filter(a=>a.stage===stage).sort((a,b)=>b.score-a.score);return <section className={'kanban-column col-'+stage} key={stage} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const a=apps.find(a=>a.id===e.dataTransfer.getData('text/plain'));if(a&&a.stage!==stage)void patch(a,{stage});}}><div className="column-heading"><span className="stage-dot"/><h3>{stageLabels[stage]}</h3><span className="column-count">{cards.length}</span></div><div className="column-cards">{cards.map(a=><button draggable onDragStart={e=>e.dataTransfer.setData('text/plain',a.id)} className="job-card" key={a.id} onClick={()=>void open(a)}><div className="card-top"><span className="company-icon">{a.company.slice(0,2)}</span></div><div className="company-name">{a.company}</div><h4>{a.position}</h4>{a.salary&&a.salary.toUpperCase()!=='UNKNOWN'?<p className="salary">{a.salary.length>60?a.salary.slice(0,58)+'…':a.salary}</p>:null}<div className="card-badges">{tasks.some(t=>t.application_id===a.id&&t.status==='blocked')?<span className="badge blocked">Blocked</span>:!a.submission_verified?<span className="badge neutral">Unverified</span>:null}</div><div className="card-bottom"><span>{a.deadline?<><Clock size={12}/>{dateLabel(a.deadline)}</>:null}</span><ArrowUpRight size={15}/></div></button>)}{!cards.length?<div className="column-empty"><span>{stage==='interview'?<Target size={20}/>:<Plus size={18}/>}</span><p>No applications</p></div>:null}</div></section>;})}</div>}
  </section>
- {(['human','ai'] as const).map(owner=>{const ownerQueue=queue.filter(t=>taskOwner(t)===owner&&(taskFilters[owner]==='all'||t.status===taskFilters[owner]));return (<section id={owner==='human'?'your-actions':'ai-actions'} key={owner} className="actions"><div className="section-heading"><div><h2>{owner==='human'?'Your actions':'AI actions'} <span className="count">{ownerQueue.length}</span></h2></div><label className="filter"><ListFilter size={16}/><select aria-label={owner==='human'?'Filter your actions':'Filter AI actions'} value={taskFilters[owner]} onChange={e=>setTaskFilters(prev=>({...prev,[owner]:e.target.value}))}><option value="all">All actions</option><option value="blocked">Blocked</option><option value="pending">Remaining</option></select><ChevronDown size={14}/></label></div><div className="table-scroll"><table><thead><tr><th>COMPANY / ACTION</th><th>LAST STAGE</th><th>STATUS</th><th>DEADLINE</th><th><span className="sr-only">Actions</span></th></tr></thead><tbody>{ownerQueue.map(t=>{const a=apps.find(a=>a.id===t.application_id)!;const late=t.deadline&&t.deadline<new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});return <tr key={t.id}><td><button className="table-title" onClick={()=>void open(a)}>{a.company} <ArrowUpRight size={12}/></button><p>{t.title}</p></td><td><span className={'stage-label stage-'+t.last_stage}><i/>{stageLabels[t.last_stage]}</span></td><td><span className={'badge '+(t.status==='blocked'?'blocked':'ready')}>{t.status==='blocked'?'Blocked':'Remaining'}</span></td><td className={late?'overdue':''}>{t.deadline?dateLabel(t.deadline):'—'}{late?<small>Overdue</small>:null}</td><td className="row-actions">{safeUrl(t.url)?<a href={owner==='human'?sharedBrowserUrl(t.url,t.id)||safeUrl(t.url):safeUrl(t.url)} target={owner==='human'?undefined:'_blank'} rel="noreferrer" title={owner==='human'?'Open in shared Edge session':'Open link'} className="icon-button" aria-label={'Open '+a.company+' action'}><ExternalLink size={16}/></a>:null}<button className="icon-button complete" disabled={saving} aria-label={'Mark complete: '+t.title} onClick={()=>void complete(t)}><Check size={17}/></button>{owner==='human'?<button className="icon-button" disabled={saving} title="Dismiss action" aria-label={'Dismiss action: '+t.title} onClick={()=>void dismiss(t)}><X size={17}/></button>:null}</td></tr>;})}</tbody></table>{!ownerQueue.length?<div className="empty-panel"><CheckCircle2 size={24}/><strong>No open actions</strong></div>:null}</div></section>);})}
+ {(['human','ai'] as const).map(owner=>{
+  const filter=taskFilters[owner];
+  const ownerQueue=queue.filter(t=>taskOwner(t)===owner&&(filter==='all'||t.status===filter||(filter==='emails'&&t.gmail_thread_id)));
+  return <section id={owner==='human'?'your-actions':'ai-actions'} key={owner} className="actions">
+   <div className="section-heading">
+    <h2>{owner==='human'?'Your actions':'AI actions'} <span className="count">{ownerQueue.length}</span></h2>
+    <label className="filter">
+     <ListFilter size={16}/>
+     <select aria-label={owner==='human'?'Filter your actions':'Filter AI actions'} value={filter} onChange={e=>setTaskFilters(prev=>({...prev,[owner]:e.target.value}))}>
+      <option value="all">All actions</option>
+      {owner==='human'&&<option value="emails">Emails</option>}
+      <option value="blocked">Blocked</option>
+      <option value="pending">Remaining</option>
+     </select>
+     <ChevronDown size={14}/>
+    </label>
+   </div>
+   <div className="table-scroll">
+    <table>
+     <thead><tr><th>COMPANY / ACTION</th><th>LAST STAGE</th><th>STATUS</th><th>DEADLINE</th><th><span className="sr-only">Actions</span></th></tr></thead>
+     <tbody>{ownerQueue.map(t=>{
+      const app=apps.find(a=>a.id===t.application_id);
+      const email=Boolean(t.gmail_thread_id);
+      const late=t.deadline&&t.deadline<new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});
+      const url=safeUrl(t.url);
+      const sharedUrl=owner==='human'&&!email&&url?sharedBrowserUrl(url,t.id):undefined;
+      const linkLabel=email?'Open email in Gmail':sharedUrl?'Open in shared Edge session':'Open link';
+      return <tr key={t.id}>
+       <td>
+        {app?<button className="table-title" onClick={()=>void open(app)}>{app.company} <ArrowUpRight size={12}/></button>:<span className="table-title">Email</span>}
+        <p>{t.title}</p>
+        {email&&t.notes&&<p>{t.notes}</p>}
+       </td>
+       <td>{t.last_stage?<span className={'stage-label stage-'+t.last_stage}><i/>{stageLabels[t.last_stage]}</span>:'—'}</td>
+       <td><span className={'badge '+(t.status==='blocked'?'blocked':'ready')}>{t.status==='blocked'?'Blocked':'Remaining'}</span></td>
+       <td className={late?'overdue':''}>{t.deadline?dateLabel(t.deadline):'—'}{late?<small>Overdue</small>:null}</td>
+       <td className="row-actions">
+        {url&&<a href={sharedUrl||url} target={sharedUrl?undefined:'_blank'} rel="noreferrer" title={linkLabel} className="icon-button" aria-label={email?linkLabel:'Open '+app?.company+' action'}>{email?<Mail size={16}/>:<ExternalLink size={16}/>}</a>}
+        <button className="icon-button complete" disabled={saving} aria-label={'Mark complete: '+t.title} onClick={()=>void complete(t)}><Check size={17}/></button>
+        {owner==='human'&&<button className="icon-button" disabled={saving} title="Dismiss action" aria-label={'Dismiss action: '+t.title} onClick={()=>void dismiss(t)}><X size={17}/></button>}
+       </td>
+      </tr>;
+     })}</tbody>
+    </table>
+    {!ownerQueue.length&&<div className="empty-panel"><CheckCircle2 size={24}/><strong>{filter==='emails'?'No emails to review':'No open actions'}</strong></div>}
+   </div>
+  </section>;
+ })}
 
  </main></div>
  {adding?<Dialog title="Add an opportunity" onClose={()=>setAdding(false)}><form className="form-grid" onSubmit={async e=>{e.preventDefault();setSaving(true);setError('');const f=new FormData(e.currentTarget);const row={company:String(f.get('company')).trim(),position:String(f.get('position')).trim(),source_url:String(f.get('source_url')),salary:String(f.get('salary'))||'UNKNOWN',score:Number(f.get('score')),source_key:'manual-'+crypto.randomUUID()};if(demo){const base=demoData().apps[3];setApps(prev=>[...prev,{...base,...row,id:crypto.randomUUID()}]);setAdding(false);}else{const r=await supabase.from('applications').insert(row).select(columns).single();if(r.error)setError(r.error.message);else{setApps(prev=>[...prev,r.data as Application]);setAdding(false);}}setSaving(false);}}><label>Company<input name="company" required maxLength={150}/></label><label>Position<input name="position" required maxLength={300}/></label><label className="wide">Application URL<input name="source_url" type="url" placeholder="https://…"/></label><label>Monthly salary<input name="salary" placeholder="UNKNOWN"/></label><label>Score / 100<input name="score" type="number" min="0" max="100" defaultValue="80" required/></label><p className="form-help wide">Saves the opportunity without applying.</p><button className="button primary wide" disabled={saving}>{saving?'Saving…':'Add opportunity'}</button></form></Dialog>:null}

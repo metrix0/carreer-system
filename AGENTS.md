@@ -33,7 +33,14 @@ Use the saved PT-BR or English cover-letter template for required letters and ta
 
 ## Authorization
 
-New applications require the user's explicit Submit! / Subscribe!. Adding a record, moving a card or clicking an application URL does not authorize submitting to an employer. Approved routine follow-up stages are automatic. Escalate confirmed human-required assessments, CAPTCHAs, unresolved legal declarations and significant commitments. Use approved preferences for permitted assessment responses. Never fabricate personal facts, submission receipts or interview invitations.
+New applications require the user's explicit Submit! / Subscribe!. Adding a record, moving a card or clicking an application URL does not authorize submitting to an employer. Approved routine portal follow-up stages are automatic. Escalate confirmed human-required assessments, CAPTCHAs, unresolved legal declarations and significant commitments. Use approved preferences for permitted assessment responses. Never fabricate personal facts, submission receipts or interview invitations.
+
+### Recruiting email
+
+- Treat Gmail as read-only during recruiting runs. Never send, reply, reply-all, forward, schedule, or create, edit or send a Gmail draft through any account, browser, API or relay. Submit! / Subscribe!, routine follow-through and previous approvals grant no email authority. Only send in an interactive conversation with explicit approval of that specific email, recipient and any attachments.
+- Route any email requiring a reply or decision, and anything with even minimal doubt, to Candidate in **Your actions → Emails**. This always applies to privacy, identity, documents and personal-data corrections. Never retrieve identity attachments for email. Read the Gmail thread and Sent to verify whether a subsequent reply already resolved the action.
+- Use one `tasks` row per Gmail thread, keyed by `gmail_thread_id` (the actual Gmail thread ID, never a message ID), with `responsible='Candidate'`, `status='pending'` and the direct Gmail conversation link in `url`. Prefer the connected Gmail result's account-qualified `display_url`, replacing its message-ID fragment with `#all/<threadId>`. Link the known application and capture its current stage, or leave both `application_id` and `last_stage` null if unmatched. Use a short action title, a minimal non-sensitive summary in notes and a deadline only if verified. Keep the body, subject if sensitive, and all attachments and personal details out of the tracker and reports.
+- Keep dismissed tasks hidden. Reopen a completed email task only for a new incoming message after its completion that requires action, and clear `completed_at` atomically. Complete pending tasks only after verifying the candidate resolved the action. Use the unique thread key to prevent duplicate tasks in concurrent runs. If a tracker write fails, surface the original Gmail conversation link to the candidate in the run update.
 
 ## Recruitment run contract
 
@@ -62,7 +69,7 @@ The `AI actions` count must measure concrete unfinished **Agent** work, not how 
 
 Do not end after a few portals fail or an arbitrary quota. Continue through independent items. If a genuine execution/tool limit prevents finishing, checkpoint the exact remaining task IDs and next item in private tracker notes and report that the run is partial; never imply all work was attempted or promise an unscheduled continuation.
 
-Use responsible exactly Candidate or Agent. Split shared work into distinct tasks. Research, URL recovery and technical retries belong to Agent. Candidate tasks require a specific personal answer, assessment or human verification. Waiting alone is application status, not an actionable task; retain concrete receipt/bounce checks separately. Never mark waiting, a failed attempt or dismissal as successful completion to reduce the counter.
+Use responsible exactly Candidate or Agent. Split shared work into distinct tasks. Research, URL recovery and technical retries belong to Agent. Candidate tasks require a specific personal answer, assessment, human verification or email review. Waiting alone is application status, not an actionable task; retain concrete receipt/bounce checks separately. Never mark waiting, a failed attempt or dismissal as successful completion to reduce the counter.
 
 Before RDC, read C:\Users\Usuario\AI-Apps\READMEAI.md. All ordinary portal browsing uses the shared visible Edge profile at %LOCALAPPDATA%\AI-Browser\UserData via CDP http://127.0.0.1:9222, reusing its existing context and coordinating the exclusive control lock. Keep CAPTCHA/login handoffs in the same tab. Do not cycle through old profiles or create replacement/headless contexts. Do not close the browser or export session secrets. If blocked there, continue independent connector work.
 

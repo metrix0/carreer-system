@@ -37,6 +37,6 @@ test('action owner separates personal steps from AI retries in legacy shared ass
  assert.equal(taskOwner({responsible:'Candidate',title:'Choose interview time'}),'human');
  assert.equal(taskOwner({responsible:'Agente — inspecionar e completar se permitido',title:'Revisar próxima etapa'}),'ai');
  const sorted=sortTasks(demoData().tasks);
- assert.deepEqual(sorted.filter(t=>taskOwner(t)==='human').map(t=>t.id),['task1','task2']);
+ assert.deepEqual(sorted.filter(t=>taskOwner(t)==='human').map(t=>t.id),['task1','task2','demo-email']);
  assert.deepEqual(sorted.filter(t=>taskOwner(t)==='ai').map(t=>t.id),['task3']);
 });

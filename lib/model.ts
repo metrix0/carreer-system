@@ -2,9 +2,9 @@ export const stages = ['discovered','subscribed','screening','interview','offer'
 export type Stage = typeof stages[number];
 export const stageLabels: Record<Stage,string> = {discovered:'Discovered',subscribed:'Subscribed',screening:'Passed / screening',interview:'Interview',offer:'Offer',hired:'Hired'};
 export type Application = {id:string; source_key:string; company:string; position:string; stage:Stage; outcome:'active'|'rejected'|'closed'|'excluded'; score:number; salary:string; remote:string; eligibility:string; deadline:string|null; source_url:string; next_action:string; responsible:string; submitted_at:string|null; submission_verified:boolean; confirmation:string; notes:string; source_status:string; created_at:string; updated_at:string; submission_details?:unknown};
-export type Task = {id:string; application_id:string; title:string; status:'blocked'|'pending'|'completed'; last_stage:Stage; responsible:string; deadline:string|null; url:string; notes:string; created_at:string; completed_at:string|null};
+export type Task = {id:string; application_id:string|null; title:string; status:'blocked'|'pending'|'completed'; last_stage:Stage|null; responsible:string; deadline:string|null; url:string; notes:string; created_at:string; completed_at:string|null; gmail_thread_id?:string|null};
 export type StageEvent = {id:string; application_id:string; from_stage:Stage|null; to_stage:Stage; event_type:string; evidence:string; created_at:string};
-export const rank = (s:Stage) => stages.indexOf(s);
+export const rank = (s:Stage|null) => s===null ? -1 : stages.indexOf(s);
 export function sortTasks(tasks:Task[]) { return [...tasks].sort((a,b)=> rank(b.last_stage)-rank(a.last_stage) || (a.deadline||'9999').localeCompare(b.deadline||'9999') || a.created_at.localeCompare(b.created_at)); }
 export function weekBounds(now=new Date()) {
  const day = new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);

@@ -52,13 +52,15 @@ This milestone implements the dashboard, database, historical import and agent w
 
 New submissions still require an explicit Submit! / Subscribe! instruction. Automatic follow-up stages may proceed within the user's approved rules. Human-required assessments and legal declarations become blocked actions. A stage change is a tracking update, never an application submission.
 
+Recruiting runs read Gmail to verify incoming activity. Messages that need the candidate's attention appear under **Your actions → Emails**, with a direct link to the original Gmail conversation. Email replies require explicit approval of the specific message, recipient and attachments.
+
 ## Validation
 
 Six focused tests cover São Paulo week boundaries, dated and verified submission counts, task priority, safe links, import classification, and requisition deduplication. A production build and TypeScript check are required. Database verification includes imported totals, append-only stage history and authenticated non-owner RLS isolation. Browser checks cover dashboard preview interactions; real owner sign-in requires the owner's confirmed session.
 
 ### Shared browser links (Windows)
 
-“Your actions” link buttons use `career-browser:open?url=…` to open the same visible Edge profile as RDC/Playwright. On the Windows PC run `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/shared-browser/install.ps1` once. This registers a per-user launcher; the browser may ask permission to open it. Other computers need their own setup. AI action links retain ordinary browser behavior.
+“Your actions” portal link buttons use `career-browser:open?url=…` to open the same visible Edge profile as RDC/Playwright. On the Windows PC run `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/shared-browser/install.ps1` once. This registers a per-user launcher; the browser may ask permission to open it. Other computers need their own setup. Email and AI action links open in a normal browser tab.
 
 The launcher uses `%LOCALAPPDATA%\AI-Browser\UserData` and loopback CDP port 9222. It remembers each task’s tab ID, so reopening it preserves a login/CAPTCHA redirect; otherwise it reuses a matching URL or opens a new tab in the existing context. It never imports cookies, closes the browser, or creates an incognito context. CAPTCHA and login remain in that tab; approvals can expire.
 
