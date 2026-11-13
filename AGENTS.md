@@ -19,7 +19,7 @@ Use the live tracker for process state and linked Gmail/portal evidence for veri
 
 ## Maintain one copy
 
-- Save candidate-confirmed facts and approved answers in Candidate Knowledge using `vault.update_secret`, preserving unrelated fields. Within one transaction, call `vault.update_secret(id)` without replacement values to acquire its row lock, then re-read the current document, apply the targeted change and call the setter with the merged JSON. Keep evidence/date for changed facts. The dashboard's Knowledge view is a safe live projection, not another stored document.
+- Save candidate-confirmed facts and approved answers in Candidate Knowledge using `vault.update_secret`, preserving unrelated fields. Within one transaction, call `vault.update_secret(id)` without replacement values to acquire its row lock, then re-read the current document, apply the targeted change and call the setter with the merged JSON. Keep evidence/date for changed facts. The owner-only Knowledge view displays every field in the candidate and identity records, including newly added keys; it is a live view, not another stored document. Do not omit saved categories from this view. Identity stays in its existing encrypted record and is shown only to the confirmed owner; agents retrieve identity only for required authorized form fields.
 - Save employer-specific restrictions, receipts, bounced addresses and historical attempts on the matching application, with source/date. Verify current evidence before acting on old context.
 - Change operating rules here. Keep README technical. Project/automation prompts remain short references. Never publish private knowledge, identity, email bodies, tracker exports or credentials in GitHub, build output or reports.
 
@@ -39,7 +39,7 @@ Routine follow-through on submitted applications is authorized. Inspect assessme
 4. Only after every currently actionable queued item has been handled, discover broadly in PT/EN across LinkedIn, Gupy, Eureca, Indeed, official employers, remote boards and university programs. Targeted research that unblocks a role is queue work. Check recorded discovery completion: discover daily and research more deeply weekly when the queue permits; record completion evidence so hourly runs do not repeat it.
 5. At a genuine execution/tool limit, checkpoint remaining IDs and the next item privately. Report a partial run and defer discovery; never promise an unscheduled continuation.
 
-Use `application_writing` in Candidate Knowledge for achievement ranking, full PT-BR/English letters and short general-purpose answers, including optional “Anything else?”, “Comments”, “Algo a mais?” and “Observação” fields. Follow employer prompts, replace placeholders, use the form's language/length limit, retain the strongest relevant evidence, and save safe wording actually submitted.
+Use `application_writing` in Candidate Knowledge for achievement ranking, full PT-BR/English letters and tailored general-purpose answers, including optional “Anything else?”, “Comments”, “Algo a mais?” and “Observação” fields. Follow employer prompts, replace placeholders, use the form's language/length limit, retain the strongest relevant evidence, and save safe wording actually submitted.
 
 ## Recruiting email
 

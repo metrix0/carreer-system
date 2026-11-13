@@ -11,7 +11,7 @@ Private recruitment workspace: https://carreer.johnvitor.com. Next.js dashboard,
 | Required sensitive identity fields | Separate protected Vault record |
 | Applications, actions, evidence and history | Supabase `applications`, `tasks`, `stage_events` |
 
-The dashboard's **Knowledge** button reads a safe, owner-only projection of the same encrypted record on demand. It stores no copy and excludes identity, declarations and current/past pay. Gmail and employer portals provide original evidence; the tracker links to it. Historical imports are backups.
+The dashboard's **Knowledge** button reads the complete, owner-only contents of the existing encrypted candidate and identity records on demand. All saved fields are available in searchable sections, including contact, declarations, compensation, sources and identity. New fields appear automatically. It stores no second profile. Gmail and employer portals provide original evidence; the tracker links to it. Historical imports are backups.
 
 ## Project prompt
 
