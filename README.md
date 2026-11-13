@@ -52,7 +52,7 @@ This milestone implements the dashboard, database, historical import and agent w
 
 New submissions still require an explicit Submit! / Subscribe! instruction. Automatic follow-up stages may proceed within the user's approved rules. Human-required assessments and legal declarations become blocked actions. A stage change is a tracking update, never an application submission.
 
-Recruiting runs read Gmail to verify incoming activity. Messages that need the candidate's attention appear under **Your actions → Emails**, with a direct link to the original Gmail conversation. Email replies require explicit approval of the specific message, recipient and attachments.
+Recruiting runs handle clear, authorized routine emails. If there is any doubt, the message appears under **Your actions → Emails**, with a direct link to the original Gmail conversation.
 
 ## Validation
 
