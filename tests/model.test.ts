@@ -2,6 +2,34 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {metrics,sortTasks,weekBounds,safeUrl,type Application,type Task} from '../lib/model';
 import {demoData} from '../lib/demo';
+import {readSubmissionDetails} from '../lib/submission-details';
+
+test('submission history displays both answer groups and keeps attachments and salary as ordinary answers', () => {
+ const custom = {question: 'Technology', answer: 'React'};
+ const other = [
+  {question: 'CV attached', answer: 'CVbr.pdf'},
+  {question: 'Pretensão salarial', answer: 'R$ 4.000'},
+  {question: 'Tem disponibilidade imediata?', answer: 'Sim'},
+ ];
+ assert.deepEqual(readSubmissionDetails({
+  custom_answers: [custom, {question: 'E-mail', answer: 'contact@example.org'}],
+  other_answers: [...other, {question: 'Data de nascimento', answer: '01/01/2000'}],
+  cv_version: 'old.pdf',
+ }), {customAnswers: [custom], otherAnswers: other});
+});
+
+test('submission history preserves recorded legacy fields without adding empty answers', () => {
+ assert.deepEqual(readSubmissionDetails({cv_version: 'CVbr.pdf (link enviado)', salary_expectation: ' '}), {
+  customAnswers: [],
+  otherAnswers: [{question: 'CV', answer: 'CVbr.pdf (link enviado)'}],
+ });
+ assert.deepEqual(readSubmissionDetails({salary_expectation: 'R$ 4.000'}), {
+  customAnswers: [],
+  otherAnswers: [{question: 'Salary expectation', answer: 'R$ 4.000'}],
+ });
+ assert.equal(readSubmissionDetails({custom_answers: [], other_answers: []}), null);
+});
+
 test('week starts Monday at midnight in Sao Paulo, including UTC boundary',()=>{
  assert.equal(weekBounds(new Date('2026-11-09T02:59:59Z')).start,'2026-11-02T03:00:00.000Z');
  assert.equal(weekBounds(new Date('2026-11-09T03:00:00Z')).start,'2026-11-09T03:00:00.000Z');

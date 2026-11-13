@@ -3,9 +3,11 @@ export function demoData(){
  const now=new Date().toISOString();
  const apps:Application[]=[['demo1','Northstar','Junior Full Stack Engineer','subscribed',94],['demo2','Orbit Labs','AI Engineering Intern','screening',96],['demo3','Cedar','Software Engineer','interview',91],['demo4','Forma','Frontend Developer','discovered',88],['demo5','Atlas','Graduate Software Engineer','subscribed',89]].map(([id,company,position,stage,score])=>({id,source_key:id,company,position,stage,score,outcome:'active',salary:'UNKNOWN',remote:'Remote · Brazil',eligibility:'Illustrative role',deadline:null,source_url:'',next_action:stage==='interview'?'Choose an interview time':'Check the recruitment portal',responsible:'Agent',submitted_at:stage==='discovered'?null:now,submission_verified:stage!=='discovered',confirmation:stage==='discovered'?'':'Illustrative confirmation — demo only',notes:'Sample data for exploring the dashboard. No real application.',source_status:'Demo',created_at:now,updated_at:now}) as Application);
  apps[0].submission_details = {
-  cv_version: 'CVen.pdf',
-  salary_expectation: 'R$ 4,000 per month',
   custom_answers: [{question: 'When can you start?', answer: 'Immediately.'}],
+  other_answers: [
+   {question: 'CV attached', answer: 'CVen.pdf'},
+   {question: 'Salary expectation', answer: 'R$ 4,000 per month'},
+  ],
  };
  const tasks:Task[]=[{id:'task1',application_id:'demo3',title:'Choose an interview time',status:'blocked',last_stage:'interview',responsible:'Candidate',deadline:null,url:'',notes:'Demo action',created_at:now,completed_at:null},{id:'task2',application_id:'demo2',title:'Complete technical assessment',status:'blocked',last_stage:'screening',responsible:'Candidate',deadline:null,url:'',notes:'Demo action',created_at:now,completed_at:null},{id:'task3',application_id:'demo4',title:'Verify remote eligibility',status:'pending',last_stage:'discovered',responsible:'Agent',deadline:null,url:'',notes:'Demo action',created_at:now,completed_at:null}];
  tasks.push({

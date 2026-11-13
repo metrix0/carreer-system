@@ -1,5 +1,18 @@
 import type {Application} from '@/lib/model';
-import {readSubmissionDetails} from '@/lib/submission-details';
+import {readSubmissionDetails, type SubmissionAnswer} from '@/lib/submission-details';
+
+function AnswerGroup({title, answers}: {title: string; answers: SubmissionAnswer[]}) {
+ if (!answers.length) return null;
+
+ return <>
+  <h4>{title}</h4>
+  <dl className="submission-answers">
+   {answers.map(({question, answer}, index) =>
+    <div key={index}><dt>{question}</dt><dd>{answer}</dd></div>
+   )}
+  </dl>
+ </>;
+}
 
 export default function SubmissionDetails({application}: {application: Application}) {
  if (!application.submission_verified) return null;
@@ -8,18 +21,8 @@ export default function SubmissionDetails({application}: {application: Applicati
  return <section className="submission-details" aria-labelledby="submission-details-heading">
   <h3 className="detail-section-title" id="submission-details-heading">What was sent</h3>
   {details ? <>
-   <dl className="submission-facts">
-    <div><dt>CV version</dt><dd>{details.cvVersion || 'Not recorded'}</dd></div>
-    <div><dt>Salary expectation</dt><dd>{details.salaryExpectation || 'Not recorded'}</dd></div>
-   </dl>
-   {details.answers.length > 0 && <>
-    <h4>Custom answers</h4>
-    <dl className="submission-answers">
-     {details.answers.map(({question, answer}, index) =>
-      <div key={index}><dt>{question}</dt><dd>{answer}</dd></div>
-     )}
-    </dl>
-   </>}
+   <AnswerGroup title="Custom answers" answers={details.customAnswers}/>
+   <AnswerGroup title="Other answers" answers={details.otherAnswers}/>
   </> : <p>No submission details recorded.</p>}
  </section>;
 }
