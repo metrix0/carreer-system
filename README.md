@@ -55,3 +55,13 @@ New submissions still require an explicit Submit! / Subscribe! instruction. Auto
 ## Validation
 
 Six focused tests cover São Paulo week boundaries, dated and verified submission counts, task priority, safe links, import classification, and requisition deduplication. A production build and TypeScript check are required. Database verification includes imported totals, append-only stage history and authenticated non-owner RLS isolation. Browser checks cover dashboard preview interactions; real owner sign-in requires the owner's confirmed session.
+
+### Shared browser links (Windows)
+
+“Your actions” link buttons use `career-browser:open?url=…` to open the same visible Edge profile as RDC/Playwright. On the Windows PC run `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/shared-browser/install.ps1` once. This registers a per-user launcher; the browser may ask permission to open it. Other computers need their own setup. AI action links retain ordinary browser behavior.
+
+The launcher uses `%LOCALAPPDATA%\AI-Browser\UserData` and loopback CDP port 9222. It remembers each task’s tab ID, so reopening it preserves a login/CAPTCHA redirect; otherwise it reuses a matching URL or opens a new tab in the existing context. It never imports cookies, closes the browser, or creates an incognito context. CAPTCHA and login remain in that tab; approvals can expire.
+
+Opening a candidate link writes `%LOCALAPPDATA%\AI-Browser\human-handoff.json` containing only the tab ID and handoff timestamp. Agents must check this marker before browser control and leave candidate work untouched. Resume only after the candidate explicitly hands control back; remove the marker then, without closing tabs. The launcher only accepts HTTPS destinations and invokes no shell with URL content. To uninstall, remove `HKCU\Software\Classes\career-browser`; profile data stays untouched.
+
+Validation must stay headless while the candidate uses the PC. Compile `SharedBrowser.cs` with `/define:QA /target:exe` to test the same launcher logic in an isolated headless profile under `%TEMP%\CareerBrowserLauncher-QA` on port 19322. Never invoke the installed visible launcher as an automated smoke test. Its visible mode is for an explicit candidate click.

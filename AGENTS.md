@@ -51,3 +51,9 @@ The dashboard replaces the old seven-section report. End with a short update: ve
 ## Checks
 
 Run `npm run typecheck`, `npm test`, and `npm run build` after substantive changes. Browser-check visible changes using the supported preview. Do not weaken RLS to simplify preview or tests. Keep dependency versions pinned and commit `package-lock.json`.
+
+## Candidate browser handoff
+
+Dashboard “Your actions” links use the per-user `career-browser:` launcher (source in `scripts/shared-browser`). Before controlling the shared browser, check `%LOCALAPPDATA%\AI-Browser\human-handoff.json`. Its presence means Candidate is working: do not navigate/reload/automate candidate tabs or remove the marker until the user explicitly returns control. Keep the exact tab/context for login and CAPTCHA. Independent connector work may continue. The marker contains tab ID/time only; do not log portal URLs or session secrets.
+
+When asked to work headlessly, all browser validation must stay headless in isolated QA state. Never launch/activate a visible browser as a test. The candidate may deliberately open the shared visible session through the dashboard launcher; do not do that on their behalf during headless work.
