@@ -14,7 +14,7 @@ select private.recruiting_claim('application:<applications.id>', '<run_uuid>'::u
 - Use the same resource key and run UUID with `'renew'` before each external action or tracker write, at least once per minute while working, and immediately after long tool calls. Confirm true immediately before final submission/send. Bound browser actions below the 15-minute claim. If renewal fails, stop acting on that resource for this run and continue only with resources you can claim independently.
 - After acquiring, refresh the tracker and check portal/email evidence before sending or submitting. Immediately before an irreversible application submission, record `source_data.submission_in_progress` with the attempt time and channel while holding the claim. A later owner must reconcile that marker with portal/Gmail evidence before retrying. If the outcome remains uncertain, keep a receipt-check action open. Clear the marker only when the outcome is verified or the attempt is known to have failed. Persist the outcome before releasing with `'release'`. Release at completion, checkpoint or handoff. Claims expire after 15 minutes without renewal.
 - Use the same claim function with `email:<gmail_thread_id>` for email replies and email task updates. If linked, claim the application first, then the thread, and release in reverse order. Read-only inbox triage needs no claim.
-- Once the queue permits discovery, use the `discovery` resource for broad discovery. If another run holds it or is still working the actionable queue, defer discovery. Recheck the recorded discovery completion after claiming. For the daily report use `report:<YYYY-MM-DD>` in America/Sao_Paulo and verify prior delivery after claiming.
+- Use the `discovery` resource for broad discovery. If another run holds that claim, continue queue work. Recheck recorded discovery completion after claiming and release at completion or checkpoint. Application claims and browser locks apply to their own work. For the daily report use `report:<YYYY-MM-DD>` in America/Sao_Paulo and verify prior delivery after claiming.
 - Shared Edge/RDC requires its existing exclusive browser control lock in addition to the application claim. If browser control is busy, release the application claim and continue independent work.
 
 ## Load once per run
@@ -46,13 +46,19 @@ Use Candidate Knowledge's remote, compensation, qualifications and contract pref
 
 Routine follow-through on submitted applications is authorized. Inspect assessment rules: perform permitted delegated steps using verified facts; escalate independent graded/psychometric evaluations, interviews, CAPTCHAs, required personal participation and unresolved required legal declarations. Do not infer restrictions from a step name, invent traits, impersonate interviews or start timed/single-attempt assessments before checking rules. Check calendar availability before scheduling.
 
-## Execute the existing queue first
+## Work the queue and discover new jobs
 
 1. Check Gmail Inbox, All Mail, recruitment labels, Spam and Sent for confirmations, replies, stages, deadlines, rejections and delivery failures. Inspect relevant live portals. Deduplicate by requisition, URL, aliases, receipts and Sent.
 2. Advance actionable post-submission work by proximity to interview, then deadline. Skip resources claimed by another run and continue through the queue. Next handle known eligible unapplied roles by fit/deadline when submission is authorized; otherwise prepare them without submitting.
 3. For each item, inspect → execute → verify → persist immediately. Record failed attempts with dated evidence, exact error, recovery step and owner; continue independent items. Do not stop at arbitrary quotas or after a few failed portals.
-4. Only after every currently actionable queued item has been handled and none is in progress elsewhere, discover broadly in PT/EN across LinkedIn, Gupy, Eureca, Indeed, official employers, remote boards and university programs. Targeted research that unblocks a role is queue work. Check recorded discovery completion: discover daily and research more deeply weekly when the queue permits; record completion evidence so hourly runs do not repeat it.
-5. At a genuine execution/tool limit, checkpoint remaining IDs and the next item privately. Report a partial run and defer discovery; never promise an unscheduled continuation.
+4. Apply the daily discovery rule below during the run. Targeted research that unblocks a role is queue work.
+5. At a genuine execution/tool limit, checkpoint remaining IDs and the next item privately. Report each unfinished part of the run and its specific blocker.
+
+### Daily job discovery
+
+- On each scheduled run, check whether discovery has already completed for the current date in America/Sao_Paulo. If due, triage urgent interview and deadline work first, then run discovery before spending the rest of the run on portal follow-ups. Open or blocked queue items, application claims held by other runs, and browser lock, login or CAPTCHA issues on existing applications do not defer discovery. Use accessible public sources if a signed-in portal is unavailable.
+- Search in PT/EN across LinkedIn, Gupy, Eureca, Indeed, official employer boards, remote boards and university programs. Research more deeply once a week. Verify that each posting is open, check it against Candidate Knowledge and deduplicate against the live tracker. Save or reuse the canonical application row for each qualifying role and verify new inserts. Scheduled discovery records openings for review. A current Submit!/Subscribe! command supplies authorization for new submissions.
+- Record dated completion evidence with sources checked and jobs added, including zero when a completed search yields no qualifying new roles. Record partial searches as partial so the next hourly run can continue. If completion evidence is missing, treat discovery as due.
 
 Use `application_writing` in Candidate Knowledge for achievement ranking, full PT-BR/English letters and tailored general-purpose answers, including optional “Anything else?”, “Comments”, “Algo a mais?” and “Observação” fields. Follow employer prompts, replace placeholders, use the form's language/length limit, retain the strongest relevant evidence, and save safe wording actually submitted.
 
@@ -93,7 +99,7 @@ Preserve the automation's schedule and enabled/paused state unless the user requ
 
 At the existing **20:18 America/Sao_Paulo** run only, publish the cumulative recruiting report to `https://johnvitor.com/ai` through its supported workflow. Check prior delivery, verify receipt and prevent duplication. Other runs do not access that destination. If publication fails, report the exact limitation.
 
-End recruiting runs with a short update: verified submissions, completed actions, Agent count before → after, and new candidate-only actions with links/deadlines. Disclose material failures/unattempted work and delivery status when relevant. Link the dashboard; omit the old seven-section/full-pipeline report unless asked. State zero progress honestly. Never claim execution, completion, deployment or scheduling without confirmation.
+End recruiting runs with a short update: discovery status and jobs added, verified submissions, completed actions, Agent count before → after, and new candidate-only actions with links/deadlines. Disclose material failures/unattempted work and delivery status when relevant. Link the dashboard; omit the old seven-section/full-pipeline report unless asked. State zero progress honestly. Never claim execution, completion, deployment or scheduling without confirmation.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
